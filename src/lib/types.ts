@@ -3,12 +3,17 @@
  * Mirrors the schema columns; not auto-generated.
  */
 
+// Index signatures let these types flow through the SDK's
+// `<T extends Record<string, unknown>>` generic constraints in tools.get/
+// query/create/update without explicit casts at every call site.
+
 export interface Quiz {
   title: string
   description: string
   theme: string
   coverImage: string
   ownerId: string
+  [key: string]: unknown
 }
 
 export interface Question {
@@ -23,6 +28,7 @@ export interface Question {
   mediaType: string   // 'none' | 'image' | 'video' | 'audio' | 'youtube'
   mediaUrl: string
   ownerId: string
+  [key: string]: unknown
 }
 
 export interface Game {
@@ -39,6 +45,7 @@ export interface Game {
   teamMode: number
   deadlineAt: number
   endedAt: number
+  [key: string]: unknown
 }
 
 export interface Player {
@@ -50,6 +57,7 @@ export interface Player {
   streak: number
   kicked: number
   lastSeen: number
+  [key: string]: unknown
 }
 
 export interface Answer {
@@ -63,4 +71,5 @@ export interface Answer {
   correct: number
   responseTimeMs: number
   pointsAwarded: number
+  [key: string]: unknown
 }

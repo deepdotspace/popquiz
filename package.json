@@ -37,7 +37,7 @@
     "@ai-sdk/openai": "^2.0.0",
     "@ai-sdk/openai-compatible": "^1.0.0",
     "ai": "^5.0.0",
-    "deepspace": "^0.2.4",
+    "deepspace": "^0.3.9",
     "framer-motion": "^11.15.0",
     "hono": "^4.7.0",
     "lucide-react": "^0.460.0",

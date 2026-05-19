@@ -397,7 +397,7 @@ app.post('/api/actions/:name', async (c) => {
   const params = await c.req.json<Record<string, unknown>>()
   const callerJwt = c.req.header('Authorization')!.slice(7)
   const tools = createActionTools(c.env, auth.userId, callerJwt)
-  const result = await action({ userId: auth.userId, params, tools, env: c.env })
+  const result = await action({ userId: auth.userId, params, tools, env: c.env, callerJwt })
   return c.json(result as unknown as Record<string, unknown>)
 })
 
@@ -467,6 +467,8 @@ app.get('/api/reports/:gameId/csv', async (c) => {
     c.env.RECORD_ROOMS.idFromName(`app:${c.env.APP_NAME}`),
   )
 
+  try {
+
   async function doQuery(
     collection: string,
     params: Record<string, unknown>,
@@ -480,10 +482,13 @@ app.get('/api/reports/:gameId/csv', async (c) => {
       },
       body: JSON.stringify({ tool: 'records.query', params: { collection, ...params } }),
     }))
+    if (!res.ok) throw new Error(`records.query failed (${res.status})`)
     const out = (await res.json()) as {
       success: boolean
+      error?: string
       data?: { records?: Array<{ recordId: string; data: any }> }
     }
+    if (!out.success) throw new Error(out.error ?? 'records.query failed')
     return out.data?.records ?? []
   }
 
@@ -500,11 +505,14 @@ app.get('/api/reports/:gameId/csv', async (c) => {
       },
       body: JSON.stringify({ tool: 'records.get', params: { collection, recordId } }),
     }))
+    if (!res.ok) throw new Error(`records.get failed (${res.status})`)
     const out = (await res.json()) as {
       success: boolean
-      data?: { recordId: string; data: any } | null
+      error?: string
+      data?: { record?: { recordId: string; data: any } }
     }
-    return out.data ?? null
+    if (!out.success) return null
+    return out.data?.record ?? null
   }
 
   const gameRec = await doGet('games', gameId)
@@ -611,13 +619,17 @@ app.get('/api/reports/:gameId/csv', async (c) => {
   const pin = String(game.pin ?? gameId).replace(/[^A-Za-z0-9_-]/g, '')
   const filename = `kahoot-game-${pin}-${datePart}.csv`
 
-  return new Response(csv, {
-    headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-      'Cache-Control': 'no-store',
-    },
-  })
+    return new Response(csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store',
+      },
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'CSV export failed'
+    return c.json({ error: msg }, 500)
+  }
 })
 
 function csvEscape(value: string): string {
@@ -648,7 +660,10 @@ app.get('*', async (c) => {
 function createActionTools(env: Env, userId: string, callerJwt: string): ActionTools {
   const stub = env.RECORD_ROOMS.get(env.RECORD_ROOMS.idFromName(`app:${env.APP_NAME}`))
 
-  async function execTool(tool: string, params: Record<string, unknown>): Promise<ActionResult> {
+  async function execTool<TData = unknown>(
+    tool: string,
+    params: Record<string, unknown>,
+  ): Promise<ActionResult<TData>> {
     const res = await stub.fetch(new Request('https://internal/api/tools/execute', {
       method: 'POST',
       headers: {
@@ -658,14 +673,14 @@ function createActionTools(env: Env, userId: string, callerJwt: string): ActionT
       },
       body: JSON.stringify({ tool, params }),
     }))
-    return res.json() as Promise<ActionResult>
+    return res.json() as Promise<ActionResult<TData>>
   }
 
-  async function callIntegration(endpoint: string, data?: unknown): Promise<ActionResult> {
+  async function callIntegration<T = unknown>(endpoint: string, data?: unknown): Promise<ActionResult<T>> {
     const integrationName = endpoint.split('/')[0]
     const billingMode = integrations[integrationName]?.billing ?? 'developer'
 
-    // Use the owner JWT for developer-billed calls, the caller's JWT otherwise.
+    // Owner JWT for developer-billed calls, caller's JWT otherwise.
     // The api-worker bills the JWT subject — no client-supplied override.
     const jwt = billingMode === 'developer' ? env.APP_OWNER_JWT : callerJwt
 
@@ -677,16 +692,18 @@ function createActionTools(env: Env, userId: string, callerJwt: string): ActionT
       },
       body: data != null ? JSON.stringify(data) : undefined,
     })
-    return res.json() as Promise<ActionResult>
+    return res.json() as Promise<ActionResult<T>>
   }
 
   return {
-    create: (collection, data) => execTool('records.create', { collection, data }),
+    create: (collection, data, recordId) =>
+      execTool('records.create', recordId ? { collection, data, recordId } : { collection, data }),
     update: (collection, recordId, data) => execTool('records.update', { collection, recordId, data }),
     remove: (collection, recordId) => execTool('records.delete', { collection, recordId }),
     get: (collection, recordId) => execTool('records.get', { collection, recordId }),
     query: (collection, options) => execTool('records.query', { collection, ...options }),
     integration: callIntegration,
+    registerUser: (opts) => execTool('users.register', opts as Record<string, unknown>),
   }
 }
 

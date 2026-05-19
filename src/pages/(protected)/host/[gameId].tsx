@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { callAction } from '../../../lib/actions-client'
 import { SHAPE_COLORS } from '../../../lib/quiz-types'
 import type { Game, Player, Question, Answer } from '../../../lib/types'
+import { useToast } from '../../../components/ui/Toast'
 
 type RecordRow<T> = { recordId: string; data: T }
 
@@ -269,6 +270,7 @@ function LobbyView({
   onNavigate: ReturnType<typeof useNavigate>
 }) {
   const [starting, setStarting] = useState(false)
+  const { error: toastError } = useToast()
   const pin = game.data.pin
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const joinUrl = `${origin}/play?pin=${pin}`
@@ -279,16 +281,26 @@ function LobbyView({
     if (players.length === 0 || starting) return
     setStarting(true)
     const res = await callAction('startGame', { gameId: game.recordId })
-    if (!res.success) setStarting(false)
+    if (!res.success) {
+      setStarting(false)
+      toastError('Could not start game', res.error)
+    }
+    // On success, leave `starting` true — the game state change unmounts
+    // this view, so resetting would just enable a stale button momentarily.
   }
 
   async function handleEnd() {
-    await callAction('endGame', { gameId: game.recordId })
+    const res = await callAction('endGame', { gameId: game.recordId })
+    if (!res.success) {
+      toastError('Could not end game', res.error)
+      return
+    }
     onNavigate('/quizzes')
   }
 
   async function handleKick(playerId: string) {
-    await callAction('kickPlayer', { gameId: game.recordId, playerId })
+    const res = await callAction('kickPlayer', { gameId: game.recordId, playerId })
+    if (!res.success) toastError('Could not remove player', res.error)
   }
 
   const pinDigits = pin.split('')
@@ -529,13 +541,14 @@ function QuestionView({
   }, [phase, timeUp, allAnswered, game.recordId])
 
   const [advancing, setAdvancing] = useState(false)
+  const { error: toastError } = useToast()
   async function handleNext() {
     if (advancing) return
     setAdvancing(true)
-    if (phase === 'in_question') {
-      await callAction('revealAnswer', { gameId: game.recordId })
-    } else {
-      await callAction('showLeaderboard', { gameId: game.recordId })
+    const action = phase === 'in_question' ? 'revealAnswer' : 'showLeaderboard'
+    const res = await callAction(action, { gameId: game.recordId })
+    if (!res.success) {
+      toastError('Could not advance', res.error)
     }
     setAdvancing(false)
   }
@@ -1037,10 +1050,12 @@ function LeaderboardView({
   )
 
   const [advancing, setAdvancing] = useState(false)
+  const { error: toastError } = useToast()
   async function handleNext() {
     if (advancing) return
     setAdvancing(true)
-    await callAction('nextQuestion', { gameId: game.recordId })
+    const res = await callAction('nextQuestion', { gameId: game.recordId })
+    if (!res.success) toastError('Could not advance', res.error)
     setAdvancing(false)
   }
 

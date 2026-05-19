@@ -22,6 +22,7 @@ import {
 import { ContrastToggle } from '../../../components/play/ContrastToggle'
 import { Shape } from '../../../components/play/Shape'
 import { SHAPE_COLORS } from '../../../lib/quiz-types'
+import { useToast } from '../../../components/ui/Toast'
 
 const PLAYER_KEY_PREFIX = 'kahoot:player:'
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -351,6 +352,7 @@ function ActiveQuestion({
   // round-trips back through useQuery).
   const [optimisticAnswered, setOptimisticAnswered] = useState(false)
   const lastQIndexRef = useRef<number>(game.currentQuestionIndex)
+  const { error: toastError } = useToast()
   useEffect(() => {
     if (game.currentQuestionIndex !== lastQIndexRef.current) {
       lastQIndexRef.current = game.currentQuestionIndex
@@ -377,6 +379,7 @@ function ActiveQuestion({
     })
     if (!res.success) {
       setOptimisticAnswered(false)
+      toastError('Answer not submitted', res.error ?? 'Tap to try again.')
     }
   }
 

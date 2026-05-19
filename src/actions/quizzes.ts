@@ -48,6 +48,7 @@ export const deleteQuiz: ActionHandler = async ({ userId, params, tools }) => {
 export const duplicateQuiz: ActionHandler = async ({ userId, params, tools }) => {
   const quizId = String(params.quizId ?? '')
   if (!quizId) return { success: false, error: 'quizId required' }
+  if (!(await ownsQuiz(tools, quizId, userId))) return { success: false, error: 'Forbidden' }
   const original = await tools.get('quizzes', quizId)
   const o = unwrap<Quiz>(original)
   if (!o) return { success: false, error: 'Not found' }
@@ -58,9 +59,8 @@ export const duplicateQuiz: ActionHandler = async ({ userId, params, tools }) =>
     coverImage: o.coverImage,
     ownerId: userId,
   })
-  if (!created.success || !created.data) return created
-  const newQuizId = (created.data as Record<string, unknown>).recordId as string
-    ?? (created.data as Record<string, unknown>).id as string
+  if (!created.success) return created
+  const newQuizId = created.data.recordId
   const qs = await queryRecords<Question>(tools, 'questions', { where: { quizId } })
   for (const q of qs) {
     await tools.create('questions', {
@@ -120,7 +120,8 @@ export const reorderQuestions: ActionHandler = async ({ userId, params, tools })
   if (!quizId || orderedIds.length === 0) return { success: false, error: 'quizId + orderedIds required' }
   if (!(await ownsQuiz(tools, quizId, userId))) return { success: false, error: 'Forbidden' }
   for (let i = 0; i < orderedIds.length; i++) {
-    await patchRecord(tools, 'questions', orderedIds[i], { order: i })
+    const res = await patchRecord(tools, 'questions', orderedIds[i], { order: i })
+    if (!res.success) return res
   }
-  return { success: true }
+  return { success: true, data: { count: orderedIds.length } }
 }

@@ -1,12 +1,9 @@
 /**
  * Shared utilities for server-action handlers.
  *
- * Patch helper: `tools.update` is a full-replace (no merge), so partial
- * updates need a get → merge → update dance. Same shape every action would
- * write — extracted here.
- *
- * Query helper: `tools.query` returns an ActionResult where the records
- * may live at .data.records OR .data depending on shape. Normalize once.
+ * `tools.update` is a full-replace (no merge), so partial updates need a
+ * get → merge → update dance. Same shape every action would write — extracted
+ * here so callers can stay terse.
  */
 
 import type { ActionTools, ActionResult } from 'deepspace/worker'
@@ -16,40 +13,36 @@ export interface RecordRow<T = Record<string, unknown>> {
   data: T
 }
 
-/** Read existing → shallow-merge → write back. Returns the merged record. */
+/** Read existing → shallow-merge → write back. Returns the update result. */
 export async function patchRecord<T extends Record<string, unknown>>(
   tools: ActionTools,
   collection: string,
   recordId: string,
   patch: Partial<T>,
-): Promise<ActionResult> {
-  const existing = await tools.get(collection, recordId)
-  if (!existing.success || !existing.data) {
+): Promise<ActionResult<{ recordId: string }>> {
+  const existing = await tools.get<T>(collection, recordId)
+  if (!existing.success) {
     return { success: false, error: existing.error ?? 'Record not found' }
   }
-  const current = (existing.data as Record<string, unknown>).data ?? existing.data
-  const merged = { ...(current as Record<string, unknown>), ...patch }
-  return tools.update(collection, recordId, merged)
+  const merged = { ...existing.data.record.data, ...patch }
+  return tools.update<T>(collection, recordId, merged)
 }
 
-export async function queryRecords<T = Record<string, unknown>>(
+export async function queryRecords<T extends Record<string, unknown> = Record<string, unknown>>(
   tools: ActionTools,
   collection: string,
-  options: Record<string, unknown> = {},
+  options: { where?: Record<string, unknown>; orderBy?: string; orderDir?: 'asc' | 'desc'; limit?: number } = {},
 ): Promise<RecordRow<T>[]> {
-  const res = await tools.query(collection, options)
-  if (!res.success || !res.data) return []
-  const raw = res.data as Record<string, unknown>
-  const list = Array.isArray(raw.records) ? raw.records : Array.isArray(raw) ? raw : []
-  return list as RecordRow<T>[]
+  const res = await tools.query<T>(collection, options)
+  if (!res.success) return []
+  return res.data.records.map((r) => ({ recordId: r.recordId, data: r.data }))
 }
 
-/** Pull a record's data field across the 3 wrapper shapes the SDK uses. */
-export function unwrap<T = Record<string, unknown>>(res: ActionResult): T | null {
-  if (!res.success || !res.data) return null
-  const raw = res.data as Record<string, unknown>
-  const record = raw.record as Record<string, unknown> | undefined
-  if (record && record.data && typeof record.data === 'object') return record.data as T
-  if (raw.data && typeof raw.data === 'object') return raw.data as T
-  return raw as T
+/** Pull the record's data field from a `tools.get` result, or null if missing. */
+export function unwrap<T extends Record<string, unknown> = Record<string, unknown>>(
+  res: ActionResult<unknown>,
+): T | null {
+  if (!res.success) return null
+  const data = res.data as { record?: { data?: T } } | undefined
+  return data?.record?.data ?? null
 }

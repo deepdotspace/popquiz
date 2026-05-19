@@ -80,11 +80,12 @@ export const joinGame: ActionHandler = async ({ userId, params, tools }) => {
   const same = existing.find((p) => p.data.userId === userId)
   if (same) {
     if (same.data.kicked) return { success: false, error: 'You were kicked from this game.' }
-    await patchRecord(tools, 'players', same.recordId, {
+    const patched = await patchRecord(tools, 'players', same.recordId, {
       nickname,
       teamName,
       lastSeen: Date.now(),
     })
+    if (!patched.success) return patched
     return { success: true, data: { playerId: same.recordId, gameId: game.recordId } }
   }
 
@@ -104,10 +105,8 @@ export const joinGame: ActionHandler = async ({ userId, params, tools }) => {
     kicked: 0,
     lastSeen: Date.now(),
   })
-  if (!created.success || !created.data) return created
-  const playerId = (created.data as Record<string, unknown>).recordId as string
-    ?? (created.data as Record<string, unknown>).id as string
-  return { success: true, data: { playerId, gameId: game.recordId } }
+  if (!created.success) return created
+  return { success: true, data: { playerId: created.data.recordId, gameId: game.recordId } }
 }
 
 export const kickPlayer: ActionHandler = async ({ userId, params, tools }) => {
@@ -249,7 +248,7 @@ export const submitAnswer: ActionHandler = async ({ userId, params, tools }) => 
     streakBonusEnabled: !!game.streakBonusEnabled,
   })
 
-  await tools.create('answers', {
+  const ansCreated = await tools.create('answers', {
     gameId,
     playerId,
     userId,
@@ -261,11 +260,13 @@ export const submitAnswer: ActionHandler = async ({ userId, params, tools }) => 
     responseTimeMs,
     pointsAwarded,
   })
-  await patchRecord(tools, 'players', playerId, {
+  if (!ansCreated.success) return ansCreated
+  const scorePatched = await patchRecord(tools, 'players', playerId, {
     score: player.score + pointsAwarded,
     streak: newStreak,
     lastSeen: Date.now(),
   })
+  if (!scorePatched.success) return scorePatched
 
   return {
     success: true,

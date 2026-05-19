@@ -249,6 +249,9 @@ export function registerAiChatRoutes(
         // the LLM stream cancels but the per-tool DO call runs to completion.
         signal: c.req.raw.signal,
       }))
+      if (!res.ok) {
+        return { success: false, error: `Tool execution failed (${res.status})` }
+      }
       const raw = await res.json()
       return capToolResultSize(raw, DEFAULT_CONTEXT_CONFIG.toolResultCap)
     })
