@@ -22,10 +22,6 @@ bindings = [
   { name = "CRON_ROOMS", class_name = "AppCronRoom" },
 ]
 
-[[r2_buckets]]
-binding = "FILES"
-bucket_name = "kahoot-files"
-
 [vars]
 APP_NAME = "kahoot"
 

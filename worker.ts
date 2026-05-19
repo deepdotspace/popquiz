@@ -97,7 +97,6 @@ export interface Env extends DOBindings<typeof __DO_MANIFEST__> {
   // forcing every field to be `unknown` here.
   [key: string]: unknown
   ASSETS: Fetcher
-  FILES: R2Bucket
   /**
    * Upstream platform-worker. In production this is a [[services]] binding;
    * in `deepspace dev` the binding is absent and the helper falls back to
