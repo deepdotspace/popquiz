@@ -1,0 +1,8 @@
+node_modules
+dist
+.wrangler
+.dev.vars
+.worker-bundle.js
+*.tgz
+past_report.md
+.impeccable.md
