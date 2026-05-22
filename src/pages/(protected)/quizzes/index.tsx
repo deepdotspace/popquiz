@@ -796,7 +796,14 @@ function ModeTab({
 function aiQuestionToData(q: DraftAiQuestion): Record<string, unknown> {
   switch (q.type) {
     case 'mcq': {
-      const opts = (q.options ?? []).slice(0, 4)
+      // Coerce every option into the exact shape the editor expects;
+      // the AI occasionally returns options with missing `text` (or with
+      // alt keys like `label`), which then crashed `.trim()` in the editor.
+      const raw = Array.isArray(q.options) ? q.options : []
+      const opts = raw.slice(0, 4).map((o) => ({
+        text: typeof o?.text === 'string' ? o.text : '',
+        correct: !!o?.correct,
+      }))
       while (opts.length < 4) opts.push({ text: '', correct: false })
       if (!opts.some((o) => o.correct)) opts[0].correct = true
       return { options: opts }

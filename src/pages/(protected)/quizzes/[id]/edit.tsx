@@ -458,12 +458,12 @@ function QuestionListItem({
 }
 
 function computeIssue(q: Question): string | null {
-  if (!q.text.trim()) return 'Question has no text yet'
+  if (!(q.text ?? '').trim()) return 'Question has no text yet'
   if (q.type === 'mcq') {
     const data = parseData(q.data) as McqData | null
-    if (!data?.options?.some((o) => o.correct))
+    if (!data?.options?.some((o) => o?.correct))
       return 'No correct answer marked'
-    if (!data.options.some((o) => o.text.trim()))
+    if (!data.options.some((o) => (o?.text ?? '').trim()))
       return 'Answer choices are empty'
   }
   return null
@@ -509,7 +509,7 @@ function QuestionEditor({
   total,
   onSaveStateChange,
 }: QuestionEditorProps) {
-  const [text, setText] = useState(question.text)
+  const [text, setText] = useState<string>(question.text ?? '')
   const [type, setType] = useState<QuestionType>((question.type as QuestionType) ?? 'mcq')
   const [data, setData] = useState<QuestionData>(parseData(question.data) ?? defaultDataFor(type))
   const [timeLimit, setTimeLimit] = useState<number>(question.timeLimit || 20)
@@ -519,7 +519,7 @@ function QuestionEditor({
 
   // Reset local mirror when the selected question changes.
   useEffect(() => {
-    setText(question.text)
+    setText(question.text ?? '')
     setType((question.type as QuestionType) ?? 'mcq')
     setData(parseData(question.data) ?? defaultDataFor((question.type as QuestionType) ?? 'mcq'))
     setTimeLimit(question.timeLimit || 20)
