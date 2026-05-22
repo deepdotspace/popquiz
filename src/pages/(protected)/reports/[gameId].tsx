@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useUser } from 'deepspace'
-import { ArrowLeft, Download, Loader2, ShieldAlert } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Download, Loader2, ShieldAlert } from 'lucide-react'
 import { EmptyState } from '../../../components/ui'
 import type { Answer, Game, Player, Question, Quiz } from '../../../lib/types'
 import {
@@ -191,7 +191,7 @@ export default function ReportDetailPage() {
               {quiz?.title ?? 'Untitled quiz'}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] tabular text-muted-foreground">
-              <span>{formatDate(game.data.endedAt)}</span>
+              <span>{headerDate(game.data)}</span>
               <span className="text-border">·</span>
               <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[11px] uppercase tracking-wider">
                 {game.data.mode === 'assignment' ? 'Async' : 'Live'}
@@ -205,6 +205,9 @@ export default function ReportDetailPage() {
             </span>
           </a>
         </header>
+
+        {/* Share — hosts who lost the assignment link can recover it here. */}
+        <ShareLinkCard pin={game.data.pin} mode={game.data.mode} ended={game.data.state === 'ended'} />
 
         {/* HEADLINE STAT */}
         <section className="mb-16">
@@ -238,7 +241,9 @@ export default function ReportDetailPage() {
                 <span className="text-foreground font-medium">{questions.length}</span>{' '}
                 {questions.length === 1 ? 'question' : 'questions'}
                 <span className="mx-2 text-border">·</span>
-                played {relativeDate(game.data.endedAt)}
+                {game.data.state === 'ended'
+                  ? `played ${relativeDate(game.data.endedAt)}`
+                  : 'in progress'}
               </p>
               {/* Distribution glance — bar of correct vs incorrect */}
               <div className="mt-4 h-[10px] w-full overflow-hidden rounded-full bg-secondary">
@@ -521,6 +526,19 @@ function formatDate(ts: number): string {
   })
 }
 
+// Header date line: ended games show when they ended; live games never reach
+// reports until ended; in-progress assignments show their deadline or 'In
+// progress' so we don't print "Unknown date".
+function headerDate(g: Game): string {
+  if (g.state === 'ended') return formatDate(g.endedAt)
+  if (g.mode === 'assignment') {
+    return g.deadlineAt > 0
+      ? `Due ${formatDate(g.deadlineAt)}`
+      : 'In progress'
+  }
+  return 'In progress'
+}
+
 function relativeDate(ts: number): string {
   if (!ts) return 'recently'
   const now = Date.now()
@@ -539,4 +557,74 @@ function formatMs(ms: number): string {
   if (!ms || ms <= 0) return '—'
   if (ms < 1000) return `${Math.round(ms)}ms`
   return `${(ms / 1000).toFixed(1)}s`
+}
+
+/**
+ * Share link block. Hosts who created an assignment, lost the join URL, and
+ * came back to the report should be able to copy it again. Always rendered
+ * for assignment games; for live games we only show it while the game is
+ * still active (after end, the PIN is dead anyway).
+ */
+function ShareLinkCard({
+  pin,
+  mode,
+  ended,
+}: {
+  pin: string
+  mode: string
+  ended: boolean
+}) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const url = pin ? `${origin}/play/${pin}` : ''
+  const [copied, setCopied] = useState(false)
+
+  if (!url) return null
+  if (mode !== 'assignment' && ended) return null
+
+  async function copy() {
+    if (!url) return
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // ignore — older browsers / blocked permission. The link is visible
+      // on screen so the host can long-press to copy manually.
+    }
+  }
+
+  return (
+    <section className="mb-12 -mt-4">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            {ended ? 'Was joined at' : 'Share link'}
+          </p>
+          <p className="font-display tabular mt-1 truncate text-[15px] font-medium text-foreground">
+            {url}
+          </p>
+          <p className="mt-1 text-[12px] tabular text-muted-foreground">
+            PIN <span className="font-semibold text-foreground">{pin}</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-foreground px-4 py-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-foreground hover:text-background"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5" />
+              Copied
+            </>
+          ) : (
+            <>
+              <Copy className="h-3.5 w-3.5" />
+              Copy link
+            </>
+          )}
+        </button>
+      </div>
+    </section>
+  )
 }
