@@ -72,6 +72,13 @@ export const joinGame: ActionHandler = async ({ userId, params, tools }) => {
   if (game.data.mode === 'live' && game.data.state !== 'lobby') {
     return { success: false, error: 'Game already started' }
   }
+  if (
+    game.data.mode === 'assignment' &&
+    game.data.deadlineAt > 0 &&
+    Date.now() > game.data.deadlineAt
+  ) {
+    return { success: false, error: 'Assignment deadline has passed' }
+  }
 
   // Reuse player row if same user reconnects.
   const existing = await queryRecords<Player>(tools, 'players', {
@@ -175,6 +182,13 @@ export const submitAnswer: ActionHandler = async ({ userId, params, tools }) => 
 
   const game = unwrap<Game>(await tools.get('games', gameId))
   if (!game) return { success: false, error: 'Game not found' }
+  if (
+    game.mode === 'assignment' &&
+    game.deadlineAt > 0 &&
+    Date.now() > game.deadlineAt
+  ) {
+    return { success: false, error: 'Assignment deadline has passed' }
+  }
 
   const player = unwrap<Player>(await tools.get('players', playerId))
   if (!player) return { success: false, error: 'Player not found' }

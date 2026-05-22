@@ -207,6 +207,21 @@ function GamePhases({
   player: Player
   players: { recordId: string; data: Player }[]
 }) {
+  // Assignment mode: self-paced, no host. The player runs the state
+  // machine themselves; game.state is only used to detect 'ended'.
+  if (game.mode === 'assignment') {
+    if (game.state === 'ended') return <EndedView player={player} players={players} />
+    return (
+      <AssignmentPlay
+        game={game}
+        gameId={gameId}
+        playerId={playerId}
+        player={player}
+        players={players}
+      />
+    )
+  }
+
   if (game.state === 'lobby') {
     return <LobbyView player={player} />
   }
@@ -403,6 +418,360 @@ function ActiveQuestion({
 
   // leaderboard
   return <LeaderboardView player={player} players={players} />
+}
+
+// ── Assignment mode ────────────────────────────────────────────────────────
+//
+// Async, self-paced: no host, no shared question state. The player advances
+// through questions on their own pace, each with its own timer. The "current
+// question" is derived from the player's submitted answers — first unanswered
+// in order. Timer expiry auto-submits an empty answer so we never loop back.
+//
+// game.state stays 'lobby' for the whole assignment until the host explicitly
+// ends it (or the deadline passes — checked server-side on every submit).
+
+function AssignmentPlay({
+  game,
+  gameId,
+  playerId,
+  player,
+  players,
+}: {
+  game: Game
+  gameId: string
+  playerId: string
+  player: Player
+  players: { recordId: string; data: Player }[]
+}) {
+  const questionsQ = useQuery<Question>('questions', { where: { quizId: game.quizId } })
+  const sortedQs = useMemo(() => {
+    return (questionsQ.records ?? []).slice().sort((a, b) => a.data.order - b.data.order)
+  }, [questionsQ.records])
+
+  const answersQ = useQuery<Answer>('answers', { where: { gameId, playerId } })
+  const myAnswers = useMemo(() => answersQ.records ?? [], [answersQ.records])
+  const answeredIdx = useMemo(() => {
+    const s = new Set<number>()
+    for (const r of myAnswers) s.add(r.data.questionIndex)
+    return s
+  }, [myAnswers])
+
+  // First unanswered, or -1 if all done.
+  const nextUnanswered = useMemo(() => {
+    for (let i = 0; i < sortedQs.length; i++) {
+      if (!answeredIdx.has(i)) return i
+    }
+    return -1
+  }, [sortedQs.length, answeredIdx])
+
+  // Per-question timer base: when the player first saw this question on this
+  // device. Resets when we land on a new question.
+  const [questionStartedAt, setQuestionStartedAt] = useState<number>(() => Date.now())
+  // Snapshot of the question we just submitted so the reveal screen knows
+  // what to show even after `nextUnanswered` moves on.
+  const [revealedFor, setRevealedFor] = useState<number | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const { error: toastError } = useToast()
+
+  // Reset timer whenever we move on to a new question (and we're not in reveal).
+  useEffect(() => {
+    if (revealedFor === null) setQuestionStartedAt(Date.now())
+  }, [nextUnanswered, revealedFor])
+
+  // Auto-clear reveal after a short pause, then the render falls through
+  // to the next question.
+  useEffect(() => {
+    if (revealedFor === null) return
+    const t = window.setTimeout(() => {
+      setRevealedFor(null)
+      setSubmitting(false)
+    }, 2400)
+    return () => window.clearTimeout(t)
+  }, [revealedFor])
+
+  async function submit(payload: QuestionAnswerPayload) {
+    if (submitting || nextUnanswered < 0) return
+    const submittedIdx = nextUnanswered
+    setSubmitting(true)
+    setRevealedFor(submittedIdx)
+    const responseTimeMs = Math.max(0, Date.now() - questionStartedAt)
+    const res = await callAction('submitAnswer', {
+      gameId,
+      playerId,
+      questionIndex: submittedIdx,
+      responseTimeMs,
+      ...payload,
+    })
+    if (!res.success) {
+      setRevealedFor(null)
+      setSubmitting(false)
+      toastError('Answer not submitted', res.error ?? 'Tap to try again.')
+    }
+  }
+
+  // Auto-submit empty answer when this question's per-player timer runs out.
+  // Without this, an unanswered question would block progression forever
+  // since `nextUnanswered` keeps pointing at it.
+  useEffect(() => {
+    if (nextUnanswered < 0 || revealedFor !== null || submitting) return
+    const q = sortedQs[nextUnanswered]
+    if (!q) return
+    const totalMs = Math.max(1, q.data.timeLimit || 20) * 1000
+    const elapsed = Date.now() - questionStartedAt
+    const remaining = totalMs - elapsed
+    if (remaining <= 0) {
+      void submit({ optionIndex: -1 })
+      return
+    }
+    const t = window.setTimeout(() => {
+      void submit({ optionIndex: -1 })
+    }, remaining)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextUnanswered, questionStartedAt, revealedFor, submitting, sortedQs])
+
+  // Deadline countdown.
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(t)
+  }, [])
+  const expired = game.deadlineAt > 0 && now > game.deadlineAt
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  if (questionsQ.status === 'loading' || answersQ.status === 'loading') {
+    return <FullPageSpinner label="Loading assignment…" />
+  }
+  if (sortedQs.length === 0) {
+    return (
+      <BoneShell>
+        <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+          <h2
+            className="font-display text-4xl font-bold"
+            style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.02em' }}
+          >
+            Nothing to play yet.
+          </h2>
+          <p className="mt-3 text-base" style={{ color: 'var(--kahoot-stage)', opacity: 0.65 }}>
+            This assignment has no questions.
+          </p>
+        </div>
+      </BoneShell>
+    )
+  }
+  if (expired && nextUnanswered >= 0) {
+    return <AssignmentExpiredView player={player} players={players} />
+  }
+  if (nextUnanswered < 0 && revealedFor === null) {
+    return <AssignmentCompleteView player={player} players={players} />
+  }
+  if (revealedFor !== null) {
+    const ans = myAnswers.find((r) => r.data.questionIndex === revealedFor)
+    return <RevealView answer={ans?.data ?? null} player={player} players={players} />
+  }
+
+  const q = sortedQs[nextUnanswered]
+  return (
+    <AssignmentQuestion
+      question={q.data}
+      questionIndex={nextUnanswered}
+      total={sortedQs.length}
+      questionStartedAt={questionStartedAt}
+      deadlineAt={game.deadlineAt}
+      now={now}
+      onSubmit={submit}
+    />
+  )
+}
+
+function AssignmentQuestion({
+  question,
+  questionIndex,
+  total,
+  questionStartedAt,
+  deadlineAt,
+  now,
+  onSubmit,
+}: {
+  question: Question
+  questionIndex: number
+  total: number
+  questionStartedAt: number
+  deadlineAt: number
+  now: number
+  onSubmit: (payload: QuestionAnswerPayload) => Promise<void> | void
+}) {
+  const totalSec = Math.max(1, question.timeLimit || 20)
+  const elapsedMs = Math.max(0, now - questionStartedAt)
+  const remainingSec = Math.max(0, Math.ceil((totalSec * 1000 - elapsedMs) / 1000))
+  const progress = Math.min(1, elapsedMs / (totalSec * 1000))
+  const lowTime = remainingSec <= 5
+
+  const deadlineLabel = useMemo(() => {
+    if (deadlineAt <= 0) return null
+    const msLeft = deadlineAt - now
+    if (msLeft <= 0) return 'Past deadline'
+    const days = Math.floor(msLeft / 86_400_000)
+    if (days >= 1) return `Due in ${days}d`
+    const hours = Math.floor(msLeft / 3_600_000)
+    if (hours >= 1) return `Due in ${hours}h`
+    const mins = Math.floor(msLeft / 60_000)
+    return `Due in ${mins}m`
+  }, [deadlineAt, now])
+
+  return (
+    <BoneShell>
+      <div className="flex flex-col px-5 pt-4 pb-2">
+        <div className="flex items-center justify-between text-[11px] font-medium uppercase"
+          style={{ color: 'var(--kahoot-stage)', opacity: 0.55, letterSpacing: '0.2em' }}>
+          <span>Question {questionIndex + 1} of {total}</span>
+          {deadlineLabel && <span>{deadlineLabel}</span>}
+        </div>
+
+        {/* Per-question timer bar */}
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full"
+          style={{ background: 'rgba(20,18,30,0.10)' }}>
+          <div
+            className="h-full rounded-full transition-[width] duration-200 ease-linear"
+            style={{
+              width: `${(1 - progress) * 100}%`,
+              background: lowTime ? 'var(--kahoot-shape-red, #E21B3C)' : 'var(--kahoot-stage)',
+            }}
+          />
+        </div>
+
+        <div className="mt-3 flex items-baseline justify-between">
+          <p
+            className="font-display flex-1 pr-3 text-[clamp(18px,5vw,28px)] font-semibold leading-tight"
+            style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.01em' }}
+          >
+            {question.text || 'Untitled question'}
+          </p>
+          <span
+            className="font-display tabular text-[clamp(22px,6vw,32px)] font-bold"
+            style={{
+              color: lowTime ? 'var(--kahoot-shape-red, #E21B3C)' : 'var(--kahoot-stage)',
+            }}
+          >
+            {remainingSec}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col">
+        <QuestionView
+          question={question}
+          questionStartedAt={questionStartedAt}
+          onSubmit={onSubmit}
+          alreadyAnswered={false}
+          myOptionIndex={null}
+          myTextAnswer={null}
+          myNumberAnswer={null}
+        />
+      </div>
+    </BoneShell>
+  )
+}
+
+function AssignmentCompleteView({
+  player,
+  players,
+}: {
+  player: Player
+  players: { recordId: string; data: Player }[]
+}) {
+  const sorted = players
+    .filter((r) => r.data.kicked !== 1)
+    .slice()
+    .sort((a, b) => b.data.score - a.data.score)
+  const rank =
+    sorted.findIndex(
+      (r) => r.data.nickname === player.nickname && r.data.userId === player.userId,
+    ) + 1
+  const place = rank > 0 ? `${ordinal(rank)} place` : 'Done'
+
+  return (
+    <BoneShell>
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="text-[10px] font-medium uppercase"
+          style={{ color: 'var(--kahoot-stage)', opacity: 0.45, letterSpacing: '0.4em' }}>
+          All done
+        </div>
+        <h1
+          className="font-display mt-4 text-[44px] font-bold"
+          style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.025em', lineHeight: 1 }}
+        >
+          {place}
+        </h1>
+        <div
+          className="font-display tabular mt-6 text-[56px] font-bold"
+          style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.03em', lineHeight: 1 }}
+        >
+          {player.score}
+        </div>
+        <div
+          className="mt-1 text-sm font-medium uppercase"
+          style={{ color: 'var(--kahoot-stage)', opacity: 0.55, letterSpacing: '0.28em' }}
+        >
+          points
+        </div>
+        <div
+          className="mt-10 max-w-xs text-base"
+          style={{ color: 'var(--kahoot-stage)', opacity: 0.7 }}
+        >
+          Thanks for playing, {player.nickname}.
+        </div>
+        <a
+          href="/"
+          className="mt-8 inline-block rounded-full px-6 py-3 font-display text-base font-bold"
+          style={{ background: 'var(--kahoot-spotlight)', color: 'var(--kahoot-stage)' }}
+        >
+          Back to home
+        </a>
+      </div>
+    </BoneShell>
+  )
+}
+
+function AssignmentExpiredView({
+  player,
+  players,
+}: {
+  player: Player
+  players: { recordId: string; data: Player }[]
+}) {
+  const finished = players.find(
+    (r) => r.data.nickname === player.nickname && r.data.userId === player.userId,
+  )
+  return (
+    <BoneShell>
+      <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+        <h2
+          className="font-display text-4xl font-bold"
+          style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.02em' }}
+        >
+          Assignment
+          <br />
+          deadline passed.
+        </h2>
+        {finished && (
+          <div
+            className="font-display tabular mt-8 text-[44px] font-bold"
+            style={{ color: 'var(--kahoot-stage)' }}
+          >
+            {finished.data.score} pts
+          </div>
+        )}
+        <a
+          href="/"
+          className="mt-8 rounded-full px-5 py-3 font-display text-base font-bold"
+          style={{ background: 'var(--kahoot-stage)', color: 'var(--kahoot-stage-paper)' }}
+        >
+          Back to home
+        </a>
+      </div>
+    </BoneShell>
+  )
 }
 
 // ── Reveal — full-screen takeover, one word per screen ─────────────────────

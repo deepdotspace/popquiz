@@ -144,6 +144,35 @@ export default function HostGamePage() {
     )
   }
 
+  // Assignment games have no host-driven stage — there's nothing to "host
+  // live." Point the host at Reports where the per-player results live.
+  if (game.data.mode === 'assignment') {
+    return (
+      <CalmCenter>
+        <div className="max-w-md text-center">
+          <h1 className="font-display text-4xl font-bold" style={{ color: INK }}>
+            This is an async assignment.
+          </h1>
+          <p className="mt-3 text-base" style={{ color: 'oklch(45% 0.025 270)' }}>
+            Players are working through it on their own. Open the report to
+            see who's joined and how they're scoring.
+          </p>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <Link
+              to={`/reports/${game.recordId}`}
+              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background"
+            >
+              View report
+            </Link>
+            <Link to="/quizzes" className="text-sm underline" style={{ color: INK }}>
+              Back to library
+            </Link>
+          </div>
+        </div>
+      </CalmCenter>
+    )
+  }
+
   const state = game.data.state
   const idx = game.data.currentQuestionIndex
   const currentQuestion = questions[idx]
