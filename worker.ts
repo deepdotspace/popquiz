@@ -416,16 +416,20 @@ registerAiQuizRoutes(app, resolveAuth)
 
 app.all('/api/files/*', async (c) => {
   const auth = await resolveAuth(c.req.raw, c.env)
-  const userId = auth?.userId ?? null
+  if (!auth) return c.json({ error: 'Unauthorized' }, 401)
 
   const url = new URL(c.req.url)
   const platformUrl = new URL(c.req.url)
   platformUrl.pathname = url.pathname.replace('/api/files', '/internal/files')
 
   const headers = new Headers(c.req.raw.headers)
+  // Strip any caller-supplied identity; only the JWT-derived userId may
+  // reach the platform-worker. Otherwise a client could spoof
+  // `x-user-id: <victim>` and read another user's scope=self files.
+  headers.delete('x-user-id')
   headers.set('x-app-identity-token', c.env.APP_IDENTITY_TOKEN)
   headers.set('x-app-name', c.env.APP_NAME)
-  if (userId) headers.set('x-user-id', userId)
+  headers.set('x-user-id', auth.userId)
 
   const resp = await platformWorkerFetch(
     c.env,

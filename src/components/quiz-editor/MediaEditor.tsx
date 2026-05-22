@@ -18,10 +18,12 @@ const TABS: { value: MediaType; label: string }[] = [
   { value: 'youtube', label: 'YouTube' },
 ]
 
+// Narrow each kind so the file picker won't even offer types the
+// platform-worker rejects with 415 (e.g. SVG / XML / scripts).
 const ACCEPT: Record<string, string> = {
-  image: 'image/*',
-  video: 'video/*',
-  audio: 'audio/*',
+  image: 'image/png,image/jpeg,image/webp,image/gif,image/avif',
+  video: 'video/mp4,video/webm,video/quicktime',
+  audio: 'audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg',
 }
 
 export function MediaEditor({ mediaType, mediaUrl, onChange }: Props) {
