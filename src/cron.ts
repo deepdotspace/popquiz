@@ -1,35 +1,52 @@
 /**
- * Cron task definitions — registered into the AppCronRoom DO at construction
- * time (worker.ts). The DO alarm fires `runTask(name, env)` on the schedule
- * declared here; the DO itself records executions, tracks history, and
- * pushes status to admin clients via the `/ws/cron/:roomId` WebSocket.
+ * Cron tasks — registered into the AppCronRoom DO at construction time
+ * (worker.ts). The DO alarm fires `runTask(name, env)` on the declared
+ * schedule.
  *
- * Each task declares EITHER `intervalMinutes` (run every N minutes) OR
- * `schedule` + `timezone` (5-field cron expression). CronRoom validates
- * the config at construction time and throws on ambiguous declarations.
+ * Tasks declare EITHER `intervalMinutes` OR `schedule` + `timezone`.
  *
- * Example:
- *
- *   import type { CronTask } from 'deepspace/worker'
- *   import { buildCronContext } from 'deepspace/worker'
- *
- *   export const tasks: CronTask[] = [
- *     { name: 'heartbeat', intervalMinutes: 1 },
- *     { name: 'daily-report', schedule: '0 9 * * *', timezone: 'America/New_York' },
- *   ]
- *
- *   export async function runTask(name: string, env: Env): Promise<void> {
- *     const ctx = buildCronContext(env, env.OWNER_USER_ID, `app:${env.APP_NAME}`)
- *     if (name === 'heartbeat') {
- *       // …
- *     }
- *   }
+ *   close-expired-assignments — every 5m. Walks all assignment-mode games
+ *   whose `deadlineAt` has passed but are not yet `state === 'ended'`,
+ *   and marks them ended so they stop accepting submissions and start
+ *   appearing in reports with a real ended-at date instead of '—'.
  */
 
 import type { CronTask } from 'deepspace/worker'
+import { buildCronContext } from 'deepspace/worker'
+import type { Env } from '../worker.js'
+import type { Game } from './lib/types'
 
-export const tasks: CronTask[] = []
+export const tasks: CronTask[] = [
+  { name: 'close-expired-assignments', intervalMinutes: 5 },
+]
 
-export async function runTask(_name: string, _env: unknown): Promise<void> {
-  // No-op — implement your cron tasks here. Dispatch on `_name`.
+export async function runTask(name: string, env: Env): Promise<void> {
+  if (name === 'close-expired-assignments') {
+    return closeExpiredAssignments(env)
+  }
+}
+
+async function closeExpiredAssignments(env: Env): Promise<void> {
+  const ctx = buildCronContext(env, env.OWNER_USER_ID, `app:${env.APP_NAME}`)
+  const games = (await ctx.records.query('games', { where: { mode: 'assignment' } })) as Array<{
+    recordId: string
+    data: Game
+  }>
+  const now = Date.now()
+  for (const g of games) {
+    if (g.data.state === 'ended') continue
+    if (!g.data.deadlineAt || g.data.deadlineAt > now) continue
+    try {
+      await ctx.records.update('games', g.recordId, {
+        ...g.data,
+        state: 'ended',
+        endedAt: now,
+      })
+    } catch (err) {
+      console.error('[cron] close-expired-assignments update failed', {
+        gameId: g.recordId,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
 }

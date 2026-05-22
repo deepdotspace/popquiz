@@ -79,8 +79,8 @@ export function QuestionView({
   }
   return (
     <div
-      className="flex items-center justify-center p-6 text-center"
-      style={{ minHeight: '100dvh', color: 'var(--kahoot-stage)' }}
+      className="flex h-full w-full items-center justify-center p-6 text-center"
+      style={{ color: 'var(--kahoot-stage)' }}
     >
       Unsupported question type.
     </div>
@@ -108,12 +108,8 @@ function McqGrid({
 
   return (
     <div
-      className="grid grid-cols-2 grid-rows-2 gap-1"
-      style={{
-        height: '100dvh',
-        width: '100vw',
-        background: 'var(--kahoot-stage)',
-      }}
+      className="grid h-full w-full grid-cols-2 grid-rows-2 gap-1"
+      style={{ background: 'var(--kahoot-stage)' }}
     >
       {slots.map((opt, i) => {
         const c = SHAPE_COLORS[i]
@@ -162,12 +158,8 @@ function TrueFalse({ onPick }: { onPick: (i: number) => void }) {
 
   return (
     <div
-      className="grid grid-rows-2 gap-1"
-      style={{
-        height: '100dvh',
-        width: '100vw',
-        background: 'var(--kahoot-stage)',
-      }}
+      className="grid h-full w-full grid-rows-2 gap-1"
+      style={{ background: 'var(--kahoot-stage)' }}
     >
       {(['True', 'False'] as const).map((label, i) => {
         const c = SHAPE_COLORS[i]
@@ -211,9 +203,8 @@ function TypeAnswer({ onSend }: { onSend: (text: string) => void }) {
 
   return (
     <div
-      className="flex flex-col px-5 pb-6 pt-12"
+      className="flex h-full w-full flex-col px-5 pb-6 pt-8"
       style={{
-        minHeight: '100dvh',
         background: 'var(--kahoot-spotlight)',
         color: 'var(--kahoot-stage)',
       }}
@@ -278,9 +269,8 @@ function SliderInput({
   const [val, setVal] = useState(Math.round((min + max) / 2))
   return (
     <div
-      className="flex flex-col px-5 pb-6 pt-12"
+      className="flex h-full w-full flex-col px-5 pb-6 pt-8"
       style={{
-        minHeight: '100dvh',
         background: 'var(--kahoot-spotlight)',
         color: 'var(--kahoot-stage)',
       }}
@@ -382,9 +372,8 @@ function LockedIn({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25, ease: EASE }}
-      className="relative flex flex-col items-center justify-center overflow-hidden px-6"
+      className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-6"
       style={{
-        minHeight: '100dvh',
         backgroundColor: tint,
         color: '#ffffff',
       }}

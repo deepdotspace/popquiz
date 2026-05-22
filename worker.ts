@@ -616,9 +616,11 @@ app.get('/api/reports/:gameId/csv', async (c) => {
 
   const csv = lines.join('\r\n') + '\r\n'
 
+  // In-progress assignments have endedAt=0; use today so the filename
+  // doesn't print "unknown" or "1970-01-01".
   const datePart = game.endedAt
     ? new Date(game.endedAt as number).toISOString().slice(0, 10)
-    : 'unknown'
+    : new Date().toISOString().slice(0, 10)
   const pin = String(game.pin ?? gameId).replace(/[^A-Za-z0-9_-]/g, '')
   const filename = `kahoot-game-${pin}-${datePart}.csv`
 

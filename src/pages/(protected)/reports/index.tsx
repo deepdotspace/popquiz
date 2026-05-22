@@ -47,7 +47,9 @@ export default function ReportsIndexPage() {
     const out: GameRow[] = []
     for (const g of gamesQ.records ?? []) {
       if (g.data.hostId !== userId) continue
-      if (g.data.state !== 'ended') continue
+      // Live games only show once ended; assignment games show throughout
+      // their lifetime so hosts can monitor who's joined before the deadline.
+      if (g.data.mode !== 'assignment' && g.data.state !== 'ended') continue
       const players = playersByGame.get(g.recordId) ?? []
       const winner = players.length
         ? [...players].sort((a, b) => b.score - a.score)[0]
@@ -63,7 +65,13 @@ export default function ReportsIndexPage() {
         correctRate: rate,
       })
     }
-    out.sort((a, b) => (b.game.endedAt ?? 0) - (a.game.endedAt ?? 0))
+    // Sort by recency: ended games by endedAt, in-progress assignments by
+    // their deadline so they sit at the top while live.
+    out.sort((a, b) => {
+      const aKey = a.game.endedAt || a.game.deadlineAt || 0
+      const bKey = b.game.endedAt || b.game.deadlineAt || 0
+      return bKey - aKey
+    })
     return out
   }, [gamesQ.records, quizzesQ.records, playersQ.records, answersQ.records, userId])
 
@@ -119,18 +127,32 @@ export default function ReportsIndexPage() {
 
 function ReportRow({ row, onOpen }: { row: GameRow; onOpen: () => void }) {
   const pct = Math.round(row.correctRate * 100)
+  const inProgress = row.game.state !== 'ended'
   return (
     <li>
       <button
         onClick={onOpen}
         className="group grid w-full grid-cols-1 items-center gap-4 border-b border-border py-6 text-left transition-colors hover:bg-secondary/30 sm:grid-cols-[7rem_1fr_auto] sm:gap-8 sm:px-2"
       >
-        {/* Date */}
+        {/* Date / status */}
         <div className="tabular text-[13px] text-muted-foreground">
-          <div className="font-medium uppercase tracking-wide text-foreground/80">
-            {formatShortDate(row.game.endedAt)}
-          </div>
-          <div className="text-[11.5px]">{formatTime(row.game.endedAt)}</div>
+          {inProgress ? (
+            <>
+              <div className="font-medium uppercase tracking-wide text-foreground/80">
+                In progress
+              </div>
+              <div className="text-[11.5px]">
+                {row.game.deadlineAt > 0 ? `Due ${formatShortDate(row.game.deadlineAt)}` : '—'}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="font-medium uppercase tracking-wide text-foreground/80">
+                {formatShortDate(row.game.endedAt)}
+              </div>
+              <div className="text-[11.5px]">{formatTime(row.game.endedAt)}</div>
+            </>
+          )}
         </div>
 
         {/* Title + bar + meta */}

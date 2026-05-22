@@ -6,7 +6,7 @@
  */
 
 import { Suspense, type ReactNode } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { DeepSpaceAuthProvider, useAuth } from 'deepspace'
 import { RecordProvider, RecordScope } from 'deepspace'
 import { ToastProvider } from '../components/ui'
@@ -19,19 +19,37 @@ export default function App() {
     <ToastProvider>
       <DeepSpaceAuthProvider>
         <AuthBoot>
-          {/* data-testid="app-root" is the canonical "app shell mounted" hook
-              every test relies on. Don't rename without updating templates/tests. */}
-          <div data-testid="app-root" className="flex h-screen flex-col bg-background overflow-hidden">
-            <Navigation />
-            <main className="flex-1 overflow-y-auto min-h-0">
-              <Suspense fallback={<div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>}>
-                <Outlet />
-              </Suspense>
-            </main>
-          </div>
+          <Shell />
         </AuthBoot>
       </DeepSpaceAuthProvider>
     </ToastProvider>
+  )
+}
+
+/**
+ * Top-level layout. Player play routes (/play/:pin) run fullscreen — no
+ * top nav — so the question + answer buttons fit a phone viewport without
+ * scrolling. Everywhere else uses the standard nav + scrollable main.
+ */
+function Shell() {
+  const { pathname } = useLocation()
+  const fullscreen = pathname.startsWith('/play/')
+
+  return (
+    // data-testid="app-root" is the canonical "app shell mounted" hook
+    // every test relies on. Don't rename without updating templates/tests.
+    <div data-testid="app-root" className="flex h-screen flex-col bg-background overflow-hidden">
+      {!fullscreen && <Navigation />}
+      <main className={fullscreen ? 'flex-1 overflow-hidden min-h-0' : 'flex-1 overflow-y-auto min-h-0'}>
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>
+          }
+        >
+          <Outlet />
+        </Suspense>
+      </main>
+    </div>
   )
 }
 
