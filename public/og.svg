@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <style>
+      .display { font-family: 'Funnel Display', 'Inter', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; }
+      .sans { font-family: 'Funnel Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="630" fill="#F5F1E8" />
+
+  <!-- Background shape accents, low opacity -->
+  <g opacity="0.08">
+    <polygon points="1110,90 1080,170 1140,170" fill="#E21B3C" />
+    <polygon points="1140,330 1180,370 1140,410 1100,370" fill="#1368CE" />
+    <circle cx="1100" cy="510" r="38" fill="#D89E00" />
+    <rect x="990" y="80" width="60" height="60" rx="8" fill="#26890C" />
+  </g>
+
+  <!-- Eyebrow -->
+  <g transform="translate(80, 110)">
+    <circle cx="6" cy="6" r="6" fill="#B6E83D" />
+    <text x="22" y="11" class="sans" font-size="20" fill="#14121E" letter-spacing="0.5">
+      A live quiz platform, calmly authored
+    </text>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="80" y="290" class="display" font-size="148" fill="#14121E" letter-spacing="-4.5">
+    Kahoot
+  </text>
+
+  <!-- Tagline -->
+  <text x="80" y="380" class="display" font-size="56" fill="#14121E" letter-spacing="-1.5">
+    Make every lesson
+  </text>
+  <text x="80" y="446" class="display" font-size="56" fill="#14121E" letter-spacing="-1.5">
+    the room is <tspan fill="#14121E" font-style="italic">waiting</tspan> for.
+  </text>
+
+  <!-- Lime underline accent under "waiting" -->
+  <path d="M 420 458 Q 520 450 614 458" stroke="#B6E83D" stroke-width="8" stroke-linecap="round" fill="none" />
+
+  <!-- Bottom rosette of 4 sacred shapes -->
+  <g transform="translate(80, 530)">
+    <g transform="translate(0, 0)">
+      <rect width="56" height="56" rx="10" fill="#E21B3C" />
+      <polygon points="28,16 42,40 14,40" fill="#ffffff" />
+    </g>
+    <g transform="translate(72, 0)">
+      <rect width="56" height="56" rx="10" fill="#1368CE" />
+      <polygon points="28,14 44,28 28,42 12,28" fill="#ffffff" />
+    </g>
+    <g transform="translate(144, 0)">
+      <rect width="56" height="56" rx="10" fill="#D89E00" />
+      <circle cx="28" cy="28" r="14" fill="#ffffff" />
+    </g>
+    <g transform="translate(216, 0)">
+      <rect width="56" height="56" rx="10" fill="#26890C" />
+      <rect x="14" y="14" width="28" height="28" rx="3" fill="#ffffff" />
+    </g>
+  </g>
+
+  <!-- URL on the right -->
+  <text x="1120" y="570" class="sans" font-size="22" fill="#14121E" text-anchor="end" opacity="0.7">
+    kahoot.app.space
+  </text>
+</svg>
