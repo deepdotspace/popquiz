@@ -3,6 +3,7 @@ import { useAuth, AuthOverlay } from 'deepspace'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
+import { MadeWithDeepSpace } from '../components/MadeWithDeepSpace'
 
 /**
  * Public landing — editorial headline, live PIN entry strip, and a
@@ -232,9 +233,12 @@ export default function HomePage() {
       </section>
 
       <footer className="mx-auto max-w-6xl px-6 pb-10 pt-4">
-        <p className="text-[12px] text-muted-foreground">
-          © 2026 · Built on DeepSpace · Not affiliated with Kahoot!
-        </p>
+        <div className="flex flex-col items-start gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <MadeWithDeepSpace />
+          <p className="text-[12px] text-muted-foreground">
+            © 2026 · Not affiliated with Kahoot!
+          </p>
+        </div>
       </footer>
 
       {showAuth && <AuthOverlay onClose={() => setShowAuth(false)} />}

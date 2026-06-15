@@ -27,7 +27,9 @@ const ACCEPT: Record<string, string> = {
 }
 
 export function MediaEditor({ mediaType, mediaUrl, onChange }: Props) {
-  const r2 = useR2Files()
+  // 'app' scope: uploads are publicly readable, so the returned URL works
+  // directly as an <img>/<video> src for hosts and players.
+  const r2 = useR2Files({ scope: 'app' })
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [hover, setHover] = useState(false)
@@ -42,19 +44,7 @@ export function MediaEditor({ mediaType, mediaUrl, onChange }: Props) {
     setUploading(true)
     try {
       const result = await r2.upload(file)
-      const r = result as unknown as Record<string, unknown> | undefined
-      let url = (r?.url as string) ?? (r?.publicUrl as string) ?? ''
-      if (!url && r2.getUrl) {
-        try {
-          const got = await Promise.resolve(r2.getUrl(file as unknown as never))
-          if (typeof got === 'string') url = got
-        } catch {
-          /* ignore — surface generic error below */
-        }
-      }
-      if (!url && r && typeof r.key === 'string') {
-        url = `/files/${r.key}`
-      }
+      const url = result?.url ?? ''
       if (!url) throw new Error('Upload returned no URL')
       onChange({ mediaType, mediaUrl: url })
     } catch (e) {

@@ -10,7 +10,7 @@
  *   - AI chat (Vercel AI SDK + DeepSpace proxy)
  *   - Server actions (app-defined, bypass user RBAC)
  *   - Scoped R2 file storage
- *   - HMAC-authenticated cron
+ *   - Scheduled cron tasks (CronRoom Durable Object)
  *   - Static asset serving with SPA fallback
  */
 
