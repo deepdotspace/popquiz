@@ -1,7 +1,7 @@
 /**
  * Server-authoritative scoring. Used inside server actions on submit.
  *
- * Standard mode (Kahoot's default): points scale with response speed.
+ * Standard mode (the classic default): points scale with response speed.
  *   formula: round((1 - (responseTime / timeLimit) / 2) * MAX) on correct.
  *   Sub-0.5s correct ≈ MAX. Half-time correct ≈ 75% of MAX.
  *

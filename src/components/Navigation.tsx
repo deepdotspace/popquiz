@@ -1,4 +1,4 @@
-/** Top nav — kahoot brand mark, simple text links, prominent join CTA. */
+/** Top nav — popquiz brand mark, simple text links, prominent join CTA. */
 
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
@@ -10,7 +10,7 @@ import { cn } from './ui/utils'
 
 /**
  * Tiny 4-shape rosette used as the brand mark. Hand-rolled SVG so the
- * sacred Kahoot shape colors stay loyal at any size. ~22px square.
+ * sacred answer-shape colors stay loyal at any size. ~22px square.
  */
 function Rosette({ size = 22 }: { size?: number }) {
   const half = size / 2
@@ -25,15 +25,15 @@ function Rosette({ size = 22 }: { size?: number }) {
       {/* TL: red triangle */}
       <polygon
         points="2.5,9 5.75,2 9,9"
-        fill="var(--kahoot-shape-red)"
+        fill="var(--pq-shape-red)"
       />
       {/* TR: blue diamond */}
       <polygon
         points={`${half + 4.25},2 ${half + 7.5},${half - 2} ${half + 4.25},9 ${half + 1},${half - 2}`}
-        fill="var(--kahoot-shape-blue)"
+        fill="var(--pq-shape-blue)"
       />
       {/* BL: yellow circle */}
-      <circle cx="5.75" cy={half + 4.5} r="3.25" fill="var(--kahoot-shape-yellow)" />
+      <circle cx="5.75" cy={half + 4.5} r="3.25" fill="var(--pq-shape-yellow)" />
       {/* BR: green square */}
       <rect
         x={half + 1}
@@ -41,7 +41,7 @@ function Rosette({ size = 22 }: { size?: number }) {
         width="6.5"
         height="6.5"
         rx="0.6"
-        fill="var(--kahoot-shape-green)"
+        fill="var(--pq-shape-green)"
       />
     </svg>
   )
@@ -81,11 +81,11 @@ export default function Navigation() {
           <Link
             to="/home"
             className="flex items-center gap-2.5 shrink-0 group"
-            aria-label="Kahoot home"
+            aria-label="PopQuiz home"
           >
             <Rosette />
             <span className="font-display text-[19px] font-semibold tracking-tight text-foreground transition-colors group-hover:text-foreground/80">
-              kahoot
+              popquiz
             </span>
           </Link>
 

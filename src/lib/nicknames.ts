@@ -1,7 +1,7 @@
 /**
  * Random adjective + noun nickname generator. Local — no SDK feature for it.
  *
- * 30 adjectives × 30 nouns = 900 combinations, well above Kahoot's stated
+ * 30 adjectives × 30 nouns = 900 combinations, well above the typical
  * ~800. Mostly playful, broadly classroom-safe.
  */
 

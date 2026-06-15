@@ -64,8 +64,8 @@ export function NicknamePicker({
       style={{
         minHeight: '100dvh',
         background:
-          'linear-gradient(180deg, var(--kahoot-spotlight) 0%, var(--kahoot-spotlight) 28%, var(--kahoot-stage-paper) 80%)',
-        color: 'var(--kahoot-stage)',
+          'linear-gradient(180deg, var(--pq-spotlight) 0%, var(--pq-spotlight) 28%, var(--pq-stage-paper) 80%)',
+        color: 'var(--pq-stage)',
       }}
     >
       <div className="flex items-center justify-between">
@@ -115,12 +115,12 @@ export function NicknamePicker({
                     style={
                       active
                         ? {
-                            background: 'var(--kahoot-stage)',
-                            color: 'var(--kahoot-spotlight)',
+                            background: 'var(--pq-stage)',
+                            color: 'var(--pq-spotlight)',
                           }
                         : {
                             background: 'rgba(255,255,255,0.55)',
-                            color: 'var(--kahoot-stage)',
+                            color: 'var(--pq-stage)',
                             boxShadow: 'inset 0 0 0 2px rgba(20,18,30,0.08)',
                           }
                     }
@@ -156,7 +156,7 @@ export function NicknamePicker({
                 fontSize: 'clamp(36px, 9vw, 56px)',
                 fontWeight: 700,
                 letterSpacing: '-0.02em',
-                color: 'var(--kahoot-stage)',
+                color: 'var(--pq-stage)',
                 borderBottom: '3px solid rgba(20,18,30,0.15)',
                 paddingBottom: '12px',
               }}
@@ -188,7 +188,7 @@ export function NicknamePicker({
               maxLength={30}
               className="mt-2 w-full bg-transparent font-display text-2xl font-bold outline-none"
               style={{
-                color: 'var(--kahoot-stage)',
+                color: 'var(--pq-stage)',
                 borderBottom: '2px solid rgba(20,18,30,0.15)',
                 paddingBottom: '8px',
               }}
@@ -216,8 +216,8 @@ export function NicknamePicker({
         whileTap={canSubmit ? { scale: 0.98 } : undefined}
         className="mt-6 w-full rounded-[24px] py-5 font-display text-2xl font-bold transition-opacity disabled:opacity-40"
         style={{
-          background: 'var(--kahoot-spotlight)',
-          color: 'var(--kahoot-stage)',
+          background: 'var(--pq-spotlight)',
+          color: 'var(--pq-stage)',
           minHeight: '64px',
         }}
       >

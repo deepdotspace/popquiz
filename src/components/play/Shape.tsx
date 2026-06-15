@@ -1,5 +1,5 @@
 /**
- * Iconic Kahoot answer shapes — triangle, diamond, circle, square.
+ * Iconic answer shapes — triangle, diamond, circle, square.
  * Inline SVG, currentColor fill. Proportions tuned: equilateral triangle
  * pointing up, perfect rotated-square diamond, circle slightly larger than
  * the inscribed circle, rounded-corner square (~8% radius).

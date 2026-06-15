@@ -1,5 +1,5 @@
 /** App name — replaced by the CLI during scaffolding */
-export const APP_NAME = 'kahoot'
+export const APP_NAME = 'popquiz'
 
 /** Primary scope ID for the app's RecordRoom DO */
 export const SCOPE_ID = `app:${APP_NAME}`

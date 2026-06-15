@@ -622,7 +622,7 @@ app.get('/api/reports/:gameId/csv', async (c) => {
     ? new Date(game.endedAt as number).toISOString().slice(0, 10)
     : new Date().toISOString().slice(0, 10)
   const pin = String(game.pin ?? gameId).replace(/[^A-Za-z0-9_-]/g, '')
-  const filename = `kahoot-game-${pin}-${datePart}.csv`
+  const filename = `popquiz-game-${pin}-${datePart}.csv`
 
     return new Response(csv, {
       headers: {

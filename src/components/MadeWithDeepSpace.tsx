@@ -2,7 +2,7 @@
  * "Made with DeepSpace" credit badge.
  *
  * Links out to deep.space (with launch UTM params). Styled to sit inside the
- * Kahoot theme — warm card surface, navy ink, the rounded-pill language used
+ * PopQuiz theme — warm card surface, navy ink, the rounded-pill language used
  * by the nav's Join button — while keeping a DeepSpace signature: a small
  * star/sparkle mark that lights up in brand lime on hover (our one accent
  * "punctuation mark").

@@ -170,7 +170,7 @@ export default function QuizEditorPage() {
         <h2 className="font-display text-2xl font-semibold">Quiz not found</h2>
         <p className="mt-1 text-sm text-muted-foreground">It may have been deleted.</p>
         <Button onClick={() => navigate('/quizzes')} className="mt-6">
-          Back to my kahoots
+          Back to my quizzes
         </Button>
       </div>
     )
@@ -185,7 +185,7 @@ export default function QuizEditorPage() {
           className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">My kahoots</span>
+          <span className="hidden sm:inline">My quizzes</span>
         </button>
 
         <div className="h-5 w-px bg-border" />

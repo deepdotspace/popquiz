@@ -131,7 +131,7 @@ export default function QuizzesIndexPage() {
     const res = await callAction('deleteQuiz', { quizId })
     setBusyId(null)
     setConfirmDelete(null)
-    if (res.success) toastSuccess('Deleted', 'The kahoot is gone.')
+    if (res.success) toastSuccess('Deleted', 'The quiz is gone.')
     else toastError("Couldn't delete", res.error ?? 'Try again.')
   }
 
@@ -157,12 +157,12 @@ export default function QuizzesIndexPage() {
               className="font-display font-semibold tracking-tight"
               style={{ fontSize: 'clamp(2.25rem, 5vw, 3.75rem)', letterSpacing: '-0.03em' }}
             >
-              Your kahoots.
+              Your quizzes.
             </h1>
             {!loading && !isEmpty && (
               <p className="mt-2 text-[14px] tabular text-muted-foreground">
                 <span className="text-foreground font-medium">{totalCount}</span>{' '}
-                {totalCount === 1 ? 'kahoot' : 'kahoots'}
+                {totalCount === 1 ? 'quiz' : 'quizzes'}
                 <span className="mx-2 text-border">·</span>
                 <span className="text-foreground font-medium">{totalQuestions}</span>{' '}
                 {totalQuestions === 1 ? 'question' : 'questions'} authored
@@ -179,7 +179,7 @@ export default function QuizzesIndexPage() {
           <EmptyAuthor onSeed={openCreate} />
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <NewKahootTile onClick={() => openCreate('blank')} />
+            <NewQuizTile onClick={() => openCreate('blank')} />
             {myQuizzes.map((q) => (
               <QuizCard
                 key={q.recordId}
@@ -213,7 +213,7 @@ export default function QuizzesIndexPage() {
         open={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
         onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
-        title="Delete this kahoot?"
+        title="Delete this quiz?"
         description="This permanently removes the quiz and all its questions."
         confirmText="Delete"
         variant="destructive"
@@ -255,7 +255,7 @@ function EmptyAuthor({ onSeed }: { onSeed: (mode: CreateMode) => void }) {
           className="font-display font-semibold tracking-tight"
           style={{ fontSize: 'clamp(1.85rem, 4vw, 2.75rem)', letterSpacing: '-0.025em' }}
         >
-          Author your first kahoot.
+          Author your first quiz.
         </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
           Start blank, hand a topic to the AI, or point it at a URL. You can
@@ -268,7 +268,7 @@ function EmptyAuthor({ onSeed }: { onSeed: (mode: CreateMode) => void }) {
           label="Blank"
           hint="Start with an empty canvas."
           onClick={() => onSeed('blank')}
-          accent="var(--kahoot-shape-red)"
+          accent="var(--pq-shape-red)"
           diagram={
             <svg viewBox="0 0 80 80" className="h-full w-full" aria-hidden>
               <rect x="14" y="10" width="52" height="60" rx="5" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -281,14 +281,14 @@ function EmptyAuthor({ onSeed }: { onSeed: (mode: CreateMode) => void }) {
           label="From topic"
           hint="The AI drafts questions from a subject line."
           onClick={() => onSeed('topic')}
-          accent="var(--kahoot-shape-blue)"
+          accent="var(--pq-shape-blue)"
           diagram={
             <svg viewBox="0 0 80 80" className="h-full w-full" aria-hidden>
               <line x1="14" y1="20" x2="66" y2="20" stroke="currentColor" strokeWidth="2" />
               <line x1="14" y1="34" x2="50" y2="34" stroke="currentColor" strokeWidth="2" opacity="0.5" />
               <line x1="14" y1="48" x2="60" y2="48" stroke="currentColor" strokeWidth="2" opacity="0.5" />
               <line x1="14" y1="62" x2="40" y2="62" stroke="currentColor" strokeWidth="2" opacity="0.5" />
-              <polygon points="58,52 70,52 64,64" fill="var(--kahoot-shape-blue)" />
+              <polygon points="58,52 70,52 64,64" fill="var(--pq-shape-blue)" />
             </svg>
           }
         />
@@ -296,7 +296,7 @@ function EmptyAuthor({ onSeed }: { onSeed: (mode: CreateMode) => void }) {
           label="From URL"
           hint="Paste a Wikipedia or docs link — we read it for you."
           onClick={() => onSeed('url')}
-          accent="var(--kahoot-shape-green)"
+          accent="var(--pq-shape-green)"
           diagram={
             <svg viewBox="0 0 80 80" className="h-full w-full" aria-hidden>
               <rect x="10" y="22" width="32" height="20" rx="10" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -354,7 +354,7 @@ function SeedTile({
 
 /* ───────────────── New tile (in grid) ───────────────── */
 
-function NewKahootTile({ onClick }: { onClick: () => void }) {
+function NewQuizTile({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -365,7 +365,7 @@ function NewKahootTile({ onClick }: { onClick: () => void }) {
       </span>
       <div>
         <h3 className="font-display text-[1.5rem] font-semibold leading-[1.05] tracking-tight">
-          New kahoot
+          New quiz
         </h3>
         <p className="mt-1 text-[13.5px] opacity-80">
           Blank, from a topic, or from a URL.
@@ -410,7 +410,7 @@ function QuizCard({ quiz, questionCount, busy, onEdit, onDuplicate, onDelete, on
       <div>
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-display line-clamp-2 text-[1.4rem] font-semibold leading-[1.1] tracking-tight">
-            {quiz.title || 'Untitled kahoot'}
+            {quiz.title || 'Untitled quiz'}
           </h3>
           <div className="relative" ref={menuRef}>
             <button
@@ -617,7 +617,7 @@ function CreateQuizModal({ initialMode, onClose, onCreated }: CreateQuizModalPro
       <div className="relative">
         <div className="px-6 pt-7 pb-3">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            New kahoot
+            New quiz
           </p>
           <h2 className="font-display text-[1.75rem] font-semibold leading-tight tracking-tight">
             How do you want to start?
@@ -825,7 +825,7 @@ void LinkIcon
 
 /* ───────────────── Per-game settings (shared by Host + Assignment) ─────────────────
  * Spec §4.4 — every game can be configured before launch.
- * Defaults match Kahoot's classic experience: standard scoring, streak on,
+ * Defaults match the classic experience: standard scoring, streak on,
  * nickname generator on (so phones are PvP-fast), classic (non-team) mode.
  */
 

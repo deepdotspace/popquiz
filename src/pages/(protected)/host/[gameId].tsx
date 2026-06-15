@@ -37,8 +37,8 @@ function parseQuestion(q: Question): ParsedQuestionData {
 // ─── motion tokens ────────────────────────────────────────────────────────
 const EASE_OUT_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
-const STAGE_INK = 'var(--kahoot-stage)'
-const STAGE_PAPER = 'var(--kahoot-stage-paper)'
+const STAGE_INK = 'var(--pq-stage)'
+const STAGE_PAPER = 'var(--pq-stage-paper)'
 const LIME = 'var(--color-primary)'
 const INK = 'var(--color-foreground)'
 
@@ -599,7 +599,7 @@ function QuestionView({
           <div className="flex items-baseline gap-3">
             <span
               className="font-display tabular text-[clamp(40px,4.2vw,72px)] font-bold leading-none"
-              style={{ color: lowTime ? 'var(--kahoot-shape-red)' : LIME }}
+              style={{ color: lowTime ? 'var(--pq-shape-red)' : LIME }}
             >
               {remainingSec}
             </span>
@@ -633,7 +633,7 @@ function QuestionView({
           <motion.div
             className="h-full rounded-full"
             style={{
-              background: lowTime ? 'var(--kahoot-shape-red)' : LIME,
+              background: lowTime ? 'var(--pq-shape-red)' : LIME,
               width: `${(1 - progress) * 100}%`,
               marginLeft: 'auto',
             }}
@@ -1460,10 +1460,10 @@ function Confetti() {
   const pieces = useMemo(() => {
     const out: { x: number; rot: number; color: string; delay: number; shape: string }[] = []
     const colors = [
-      'var(--kahoot-shape-red)',
-      'var(--kahoot-shape-blue)',
-      'var(--kahoot-shape-yellow)',
-      'var(--kahoot-shape-green)',
+      'var(--pq-shape-red)',
+      'var(--pq-shape-blue)',
+      'var(--pq-shape-yellow)',
+      'var(--pq-shape-green)',
       LIME,
     ]
     const shapes = ['triangle', 'diamond', 'circle', 'square']

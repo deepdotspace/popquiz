@@ -1,8 +1,8 @@
-# Kahoot
+# PopQuiz
 
 A real-time live-quiz platform built with the [DeepSpace SDK](https://github.com/deepdotspace).
 
-**Live: [kahoot.app.space](https://kahoot.app.space)**
+**Live: [popquiz.app.space](https://popquiz.app.space)**
 
 ## Features
 

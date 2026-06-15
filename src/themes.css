@@ -11,13 +11,13 @@
  *   2. Add an entry to `src/themes.ts` so it shows up in the typed catalog.
  */
 
-/* ── Kahoot — bespoke theme for this app ─────────────────────
+/* ── PopQuiz — bespoke theme for this app ─────────────────────
  * Warm bone background (never cool gray), deep ink text (never pure black),
  * electric lime brand color used SPARINGLY. Tints neutrals warm to feel
- * inviting rather than clinical. The four sacred Kahoot shape colors stay
+ * inviting rather than clinical. The four sacred answer-shape colors stay
  * untouched in code (lib/quiz-types).
  */
-[data-theme="kahoot"] {
+[data-theme="popquiz"] {
   color-scheme: light;
 
   --color-background: oklch(98% 0.006 80);   /* paper — warm bone */
@@ -52,14 +52,14 @@
   --shadow-card: 0 1px 0 oklch(90% 0.01 80), 0 8px 24px oklch(20% 0.015 270 / 0.06);
   --shadow-card-hover: 0 1px 0 oklch(90% 0.01 80), 0 16px 36px oklch(20% 0.015 270 / 0.10);
 
-  /* App-specific extras (read these directly via var(--kahoot-*)) */
-  --kahoot-stage:        oklch(20% 0.015 270);          /* host live screen ink */
-  --kahoot-stage-paper:  oklch(98% 0.006 80);
-  --kahoot-spotlight:    oklch(94% 0.18 130);
-  --kahoot-shape-red:    #E21B3C;
-  --kahoot-shape-blue:   #1368CE;
-  --kahoot-shape-yellow: #D89E00;
-  --kahoot-shape-green:  #26890C;
+  /* App-specific extras (read these directly via var(--pq-*)) */
+  --pq-stage:        oklch(20% 0.015 270);          /* host live screen ink */
+  --pq-stage-paper:  oklch(98% 0.006 80);
+  --pq-spotlight:    oklch(94% 0.18 130);
+  --pq-shape-red:    #E21B3C;
+  --pq-shape-blue:   #1368CE;
+  --pq-shape-yellow: #D89E00;
+  --pq-shape-green:  #26890C;
 }
 
 /* ── Dark themes ──────────────────────────────────────────── */
@@ -440,12 +440,12 @@
   color: #ffe600 !important;
 }
 
-/* Kahoot player surface vars — stark black/white/yellow override.
+/* Player surface vars — stark black/white/yellow override.
  * Shape colors stay sacred (still recognizable in high contrast). */
 :root[data-contrast="high"] {
-  --kahoot-stage: #000000;
-  --kahoot-stage-paper: #ffffff;
-  --kahoot-spotlight: #ffe600;
+  --pq-stage: #000000;
+  --pq-stage-paper: #ffffff;
+  --pq-spotlight: #ffe600;
 }
 
 /* Citrus — light cream with lime accent (energetic, fitness, youth) */

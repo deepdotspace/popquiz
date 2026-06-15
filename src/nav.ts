@@ -12,7 +12,7 @@ export interface NavItem {
 
 export const nav: NavItem[] = [
   { path: '/home', label: 'Home' },
-  { path: '/quizzes', label: 'My Kahoots', roles: ['member' as Role] },
+  { path: '/quizzes', label: 'My Quizzes', roles: ['member' as Role] },
   { path: '/reports', label: 'Reports', roles: ['member' as Role] },
   { path: '/play', label: 'Join a game' },
 ]

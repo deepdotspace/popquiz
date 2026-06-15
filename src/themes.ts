@@ -12,10 +12,10 @@
  */
 
 export const THEMES = [
-  // ── Kahoot bespoke ──────────────────────────────────────────────────────
+  // ── PopQuiz bespoke ──────────────────────────────────────────────────────
   {
-    id: 'kahoot',
-    label: 'Kahoot',
+    id: 'popquiz',
+    label: 'PopQuiz',
     description: 'Warm bone with electric lime. The default for this app.',
   },
 

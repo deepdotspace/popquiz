@@ -124,7 +124,7 @@ export default function HomePage() {
               onClick={onCreate}
               className="inline-flex items-center gap-1.5 self-start text-[15px] font-medium tracking-tight text-foreground underline-offset-[6px] hover:underline lg:self-auto lg:pb-3"
             >
-              Or create a kahoot
+              Or create a quiz
               <ArrowRight className="h-4 w-4" aria-hidden />
             </a>
           </div>
@@ -149,8 +149,8 @@ export default function HomePage() {
           <Spread
             num="01"
             title="Author with AI"
-            line="Drop a topic or paste a URL. A draft kahoot lands in seconds — yours to edit, never just to ship."
-            shapeColor="var(--kahoot-shape-red)"
+            line="Drop a topic or paste a URL. A draft quiz lands in seconds, yours to edit, never just to ship."
+            shapeColor="var(--pq-shape-red)"
             diagram={
               <svg viewBox="0 0 200 110" className="h-full w-full" aria-hidden>
                 <line x1="20" y1="22" x2="180" y2="22" stroke="currentColor" strokeWidth="2" />
@@ -159,7 +159,7 @@ export default function HomePage() {
                 <line x1="20" y1="82" x2="100" y2="82" stroke="currentColor" strokeWidth="2" opacity="0.55" />
                 <polygon
                   points="170,72 184,72 177,86"
-                  fill="var(--kahoot-shape-red)"
+                  fill="var(--pq-shape-red)"
                 />
               </svg>
             }
@@ -168,7 +168,7 @@ export default function HomePage() {
             num="02"
             title="Host live"
             line="Project to the wall, share the PIN, and run the room. The host screen does the heavy lifting — you stay the conductor."
-            shapeColor="var(--kahoot-shape-blue)"
+            shapeColor="var(--pq-shape-blue)"
             diagram={
               <svg viewBox="0 0 200 110" className="h-full w-full" aria-hidden>
                 <rect x="20" y="14" width="160" height="70" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -176,7 +176,7 @@ export default function HomePage() {
                 <line x1="40" y1="52" x2="100" y2="52" stroke="currentColor" strokeWidth="2" opacity="0.4" />
                 <polygon
                   points="100,98 110,90 110,106"
-                  fill="var(--kahoot-shape-blue)"
+                  fill="var(--pq-shape-blue)"
                 />
                 <line x1="100" y1="84" x2="100" y2="98" stroke="currentColor" strokeWidth="2" />
               </svg>
@@ -186,14 +186,14 @@ export default function HomePage() {
             num="03"
             title="Score in real time"
             line="Speed-weighted points, streak bonuses, leaderboards that animate. The recap shows up in Reports the second the game ends."
-            shapeColor="var(--kahoot-shape-green)"
+            shapeColor="var(--pq-shape-green)"
             diagram={
               <svg viewBox="0 0 200 110" className="h-full w-full" aria-hidden>
                 <line x1="20" y1="92" x2="180" y2="92" stroke="currentColor" strokeWidth="2" />
-                <rect x="34" y="60" width="22" height="32" fill="var(--kahoot-shape-yellow)" />
-                <rect x="68" y="40" width="22" height="52" fill="var(--kahoot-shape-green)" />
-                <rect x="102" y="22" width="22" height="70" fill="var(--kahoot-shape-blue)" />
-                <rect x="136" y="50" width="22" height="42" fill="var(--kahoot-shape-red)" />
+                <rect x="34" y="60" width="22" height="32" fill="var(--pq-shape-yellow)" />
+                <rect x="68" y="40" width="22" height="52" fill="var(--pq-shape-green)" />
+                <rect x="102" y="22" width="22" height="70" fill="var(--pq-shape-blue)" />
+                <rect x="136" y="50" width="22" height="42" fill="var(--pq-shape-red)" />
               </svg>
             }
           />
@@ -225,7 +225,7 @@ export default function HomePage() {
               onClick={onCreate}
               className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-[14px] font-semibold text-primary-foreground transition-transform hover:-translate-y-px"
             >
-              Create a kahoot
+              Create a quiz
               <ArrowRight className="h-4 w-4" aria-hidden />
             </a>
           </div>
@@ -236,7 +236,7 @@ export default function HomePage() {
         <div className="flex flex-col items-start gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <MadeWithDeepSpace />
           <p className="text-[12px] text-muted-foreground">
-            © 2026 · Not affiliated with Kahoot!
+            © 2026 PopQuiz
           </p>
         </div>
       </footer>
@@ -264,7 +264,7 @@ function HeroShapes() {
         viewBox="0 0 100 100"
         style={{ transform: 'rotate(8deg)', opacity: 0.08 }}
       >
-        <polygon points="50,5 95,90 5,90" fill="var(--kahoot-shape-red)" />
+        <polygon points="50,5 95,90 5,90" fill="var(--pq-shape-red)" />
       </svg>
       {/* Blue diamond */}
       <svg
@@ -274,7 +274,7 @@ function HeroShapes() {
         viewBox="0 0 100 100"
         style={{ transform: 'rotate(-6deg)', opacity: 0.07 }}
       >
-        <polygon points="50,5 95,50 50,95 5,50" fill="var(--kahoot-shape-blue)" />
+        <polygon points="50,5 95,50 50,95 5,50" fill="var(--pq-shape-blue)" />
       </svg>
       {/* Yellow circle */}
       <svg
@@ -284,7 +284,7 @@ function HeroShapes() {
         viewBox="0 0 100 100"
         style={{ opacity: 0.09 }}
       >
-        <circle cx="50" cy="50" r="45" fill="var(--kahoot-shape-yellow)" />
+        <circle cx="50" cy="50" r="45" fill="var(--pq-shape-yellow)" />
       </svg>
       {/* Green square */}
       <svg
@@ -294,7 +294,7 @@ function HeroShapes() {
         viewBox="0 0 100 100"
         style={{ transform: 'rotate(12deg)', opacity: 0.08 }}
       >
-        <rect x="8" y="8" width="84" height="84" rx="6" fill="var(--kahoot-shape-green)" />
+        <rect x="8" y="8" width="84" height="84" rx="6" fill="var(--pq-shape-green)" />
       </svg>
     </div>
   )
@@ -313,10 +313,10 @@ function Divider() {
 function DotRow() {
   // Repeating run of the four shape colors as tiny rectangles.
   const colors = [
-    'var(--kahoot-shape-red)',
-    'var(--kahoot-shape-blue)',
-    'var(--kahoot-shape-yellow)',
-    'var(--kahoot-shape-green)',
+    'var(--pq-shape-red)',
+    'var(--pq-shape-blue)',
+    'var(--pq-shape-yellow)',
+    'var(--pq-shape-green)',
   ]
   const [tick, setTick] = useState(0)
   useEffect(() => {

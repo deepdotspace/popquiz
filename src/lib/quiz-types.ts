@@ -75,7 +75,7 @@ export const MEDIA_TYPES = {
 
 export type MediaType = typeof MEDIA_TYPES[keyof typeof MEDIA_TYPES]
 
-/** Iconic Kahoot answer-button colors + shapes. Indices map to MCQ option order. */
+/** Iconic answer-button colors + shapes. Indices map to MCQ option order. */
 export const SHAPE_COLORS = [
   { name: 'triangle', color: '#E21B3C', label: 'Triangle' },   // red
   { name: 'diamond',  color: '#1368CE', label: 'Diamond' },    // blue

@@ -41,8 +41,8 @@ export default function PlayIndexPage() {
       className="relative flex flex-col"
       style={{
         minHeight: '100dvh',
-        background: 'var(--kahoot-spotlight)',
-        color: 'var(--kahoot-stage)',
+        background: 'var(--pq-spotlight)',
+        color: 'var(--pq-stage)',
       }}
     >
       <ContrastToggle />
@@ -50,7 +50,7 @@ export default function PlayIndexPage() {
       <a
         href="/"
         className="absolute left-3 top-3 z-10 rounded-full px-3 py-1.5 text-xs font-medium opacity-70 hover:opacity-100"
-        style={{ color: 'var(--kahoot-stage)' }}
+        style={{ color: 'var(--pq-stage)' }}
       >
         ← Home
       </a>
@@ -64,7 +64,7 @@ export default function PlayIndexPage() {
           className="font-display text-base font-medium uppercase"
           style={{
             letterSpacing: '0.32em',
-            color: 'var(--kahoot-stage)',
+            color: 'var(--pq-stage)',
             opacity: 0.65,
           }}
         >
@@ -85,13 +85,13 @@ export default function PlayIndexPage() {
           placeholder="––––––"
           className="mt-4 w-full max-w-[420px] bg-transparent text-center font-display tabular outline-none"
           style={{
-            color: 'var(--kahoot-stage)',
+            color: 'var(--pq-stage)',
             // Fluid: ~70px on a 375 phone, scaling up on larger screens.
             fontSize: 'clamp(64px, 22vw, 140px)',
             fontWeight: 700,
             letterSpacing: '0.08em',
             lineHeight: 1,
-            caretColor: 'var(--kahoot-stage)',
+            caretColor: 'var(--pq-stage)',
           }}
         />
 

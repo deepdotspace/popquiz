@@ -35,10 +35,10 @@ interface QuestionStats {
 }
 
 const SHAPE_COLORS = [
-  'var(--kahoot-shape-red)',
-  'var(--kahoot-shape-blue)',
-  'var(--kahoot-shape-yellow)',
-  'var(--kahoot-shape-green)',
+  'var(--pq-shape-red)',
+  'var(--pq-shape-blue)',
+  'var(--pq-shape-yellow)',
+  'var(--pq-shape-green)',
 ]
 
 export default function ReportDetailPage() {
@@ -295,7 +295,7 @@ export default function ReportDetailPage() {
                             'font-display tabular text-[1.25rem] font-semibold tracking-tight ' +
                             (top ? 'text-foreground' : 'text-muted-foreground')
                           }
-                          style={top ? { color: 'var(--kahoot-shape-yellow)' } : undefined}
+                          style={top ? { color: 'var(--pq-shape-yellow)' } : undefined}
                         >
                           {p.rank.toString().padStart(2, '0')}
                         </span>

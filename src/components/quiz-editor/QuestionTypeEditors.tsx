@@ -10,7 +10,7 @@ import {
 } from '../../lib/quiz-types'
 
 /* ----------------------------------------------------------------------
- * Shape glyphs — tiny SVGs of the four iconic Kahoot answer shapes.
+ * Shape glyphs — tiny SVGs of the four iconic answer shapes.
  * Rendered inline next to MCQ/poll inputs so the host knows which color
  * the player will see on their phone.
  * -------------------------------------------------------------------- */

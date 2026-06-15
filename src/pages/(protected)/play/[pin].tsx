@@ -24,7 +24,7 @@ import { Shape } from '../../../components/play/Shape'
 import { SHAPE_COLORS } from '../../../lib/quiz-types'
 import { useToast } from '../../../components/ui/Toast'
 
-const PLAYER_KEY_PREFIX = 'kahoot:player:'
+const PLAYER_KEY_PREFIX = 'popquiz:player:'
 const EASE = [0.16, 1, 0.3, 1] as const
 
 export default function PlayPinPage() {
@@ -79,7 +79,7 @@ export default function PlayPinPage() {
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <h2
             className="font-display text-4xl font-bold"
-            style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.02em' }}
+            style={{ color: 'var(--pq-stage)', letterSpacing: '-0.02em' }}
           >
             You were removed
             <br />
@@ -89,8 +89,8 @@ export default function PlayPinPage() {
             href="/"
             className="mt-8 rounded-full px-5 py-3 font-display text-base font-bold"
             style={{
-              background: 'var(--kahoot-stage)',
-              color: 'var(--kahoot-stage-paper)',
+              background: 'var(--pq-stage)',
+              color: 'var(--pq-stage-paper)',
             }}
           >
             Back to home
@@ -150,11 +150,11 @@ function NicknameJoinFlow({
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <h2
             className="font-display text-4xl font-bold"
-            style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.02em' }}
+            style={{ color: 'var(--pq-stage)', letterSpacing: '-0.02em' }}
           >
             Game in progress.
           </h2>
-          <p className="mt-3 text-base" style={{ color: 'var(--kahoot-stage)', opacity: 0.65 }}>
+          <p className="mt-3 text-base" style={{ color: 'var(--pq-stage)', opacity: 0.65 }}>
             Wait for the host to start the next round.
           </p>
         </div>
@@ -254,7 +254,7 @@ function LobbyView({ player }: { player: Player }) {
           <div
             className="relative overflow-hidden rounded-[28px] px-7 py-12 text-center"
             style={{
-              background: 'var(--kahoot-stage-paper)',
+              background: 'var(--pq-stage-paper)',
               boxShadow:
                 '0 1px 0 rgba(20,18,30,0.06), 0 24px 48px rgba(20,18,30,0.10)',
               border: '1px solid rgba(20,18,30,0.06)',
@@ -264,7 +264,7 @@ function LobbyView({ player }: { player: Player }) {
               className="text-[10px] font-medium uppercase"
               style={{
                 letterSpacing: '0.4em',
-                color: 'var(--kahoot-stage)',
+                color: 'var(--pq-stage)',
                 opacity: 0.45,
               }}
             >
@@ -273,7 +273,7 @@ function LobbyView({ player }: { player: Player }) {
             <h1
               className="font-display mt-3 break-words text-[44px] font-bold leading-[0.95]"
               style={{
-                color: 'var(--kahoot-stage)',
+                color: 'var(--pq-stage)',
                 letterSpacing: '-0.025em',
               }}
             >
@@ -282,7 +282,7 @@ function LobbyView({ player }: { player: Player }) {
             {player.teamName && (
               <div
                 className="mt-3 text-sm font-medium"
-                style={{ color: 'var(--kahoot-stage)', opacity: 0.6 }}
+                style={{ color: 'var(--pq-stage)', opacity: 0.6 }}
               >
                 Team {player.teamName}
               </div>
@@ -294,7 +294,7 @@ function LobbyView({ player }: { player: Player }) {
               animate={{ opacity: [0.45, 1, 0.45] }}
               transition={{ duration: 2.4, ease: 'easeInOut', repeat: Infinity }}
               className="font-display mt-6 text-base font-medium"
-              style={{ color: 'var(--kahoot-stage)' }}
+              style={{ color: 'var(--pq-stage)' }}
             >
               Hold tight…
             </motion.div>
@@ -548,11 +548,11 @@ function AssignmentPlay({
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <h2
             className="font-display text-4xl font-bold"
-            style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.02em' }}
+            style={{ color: 'var(--pq-stage)', letterSpacing: '-0.02em' }}
           >
             Nothing to play yet.
           </h2>
-          <p className="mt-3 text-base" style={{ color: 'var(--kahoot-stage)', opacity: 0.65 }}>
+          <p className="mt-3 text-base" style={{ color: 'var(--pq-stage)', opacity: 0.65 }}>
             This assignment has no questions.
           </p>
         </div>
@@ -623,7 +623,7 @@ function AssignmentQuestion({
     <BoneShell>
       <div className="flex flex-col px-5 pt-4 pb-2">
         <div className="flex items-center justify-between text-[11px] font-medium uppercase"
-          style={{ color: 'var(--kahoot-stage)', opacity: 0.55, letterSpacing: '0.2em' }}>
+          style={{ color: 'var(--pq-stage)', opacity: 0.55, letterSpacing: '0.2em' }}>
           <span>Question {questionIndex + 1} of {total}</span>
           {deadlineLabel && <span>{deadlineLabel}</span>}
         </div>
@@ -635,7 +635,7 @@ function AssignmentQuestion({
             className="h-full rounded-full transition-[width] duration-200 ease-linear"
             style={{
               width: `${(1 - progress) * 100}%`,
-              background: lowTime ? 'var(--kahoot-shape-red, #E21B3C)' : 'var(--kahoot-stage)',
+              background: lowTime ? 'var(--pq-shape-red, #E21B3C)' : 'var(--pq-stage)',
             }}
           />
         </div>
@@ -643,14 +643,14 @@ function AssignmentQuestion({
         <div className="mt-3 flex items-baseline justify-between">
           <p
             className="font-display flex-1 pr-3 text-[clamp(18px,5vw,28px)] font-semibold leading-tight"
-            style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.01em' }}
+            style={{ color: 'var(--pq-stage)', letterSpacing: '-0.01em' }}
           >
             {question.text || 'Untitled question'}
           </p>
           <span
             className="font-display tabular text-[clamp(22px,6vw,32px)] font-bold"
             style={{
-              color: lowTime ? 'var(--kahoot-shape-red, #E21B3C)' : 'var(--kahoot-stage)',
+              color: lowTime ? 'var(--pq-shape-red, #E21B3C)' : 'var(--pq-stage)',
             }}
           >
             {remainingSec}
@@ -694,37 +694,37 @@ function AssignmentCompleteView({
     <BoneShell>
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
         <div className="text-[10px] font-medium uppercase"
-          style={{ color: 'var(--kahoot-stage)', opacity: 0.45, letterSpacing: '0.4em' }}>
+          style={{ color: 'var(--pq-stage)', opacity: 0.45, letterSpacing: '0.4em' }}>
           All done
         </div>
         <h1
           className="font-display mt-4 text-[44px] font-bold"
-          style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.025em', lineHeight: 1 }}
+          style={{ color: 'var(--pq-stage)', letterSpacing: '-0.025em', lineHeight: 1 }}
         >
           {place}
         </h1>
         <div
           className="font-display tabular mt-6 text-[56px] font-bold"
-          style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.03em', lineHeight: 1 }}
+          style={{ color: 'var(--pq-stage)', letterSpacing: '-0.03em', lineHeight: 1 }}
         >
           {player.score}
         </div>
         <div
           className="mt-1 text-sm font-medium uppercase"
-          style={{ color: 'var(--kahoot-stage)', opacity: 0.55, letterSpacing: '0.28em' }}
+          style={{ color: 'var(--pq-stage)', opacity: 0.55, letterSpacing: '0.28em' }}
         >
           points
         </div>
         <div
           className="mt-10 max-w-xs text-base"
-          style={{ color: 'var(--kahoot-stage)', opacity: 0.7 }}
+          style={{ color: 'var(--pq-stage)', opacity: 0.7 }}
         >
           Thanks for playing, {player.nickname}.
         </div>
         <a
           href="/"
           className="mt-8 inline-block rounded-full px-6 py-3 font-display text-base font-bold"
-          style={{ background: 'var(--kahoot-spotlight)', color: 'var(--kahoot-stage)' }}
+          style={{ background: 'var(--pq-spotlight)', color: 'var(--pq-stage)' }}
         >
           Back to home
         </a>
@@ -748,7 +748,7 @@ function AssignmentExpiredView({
       <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
         <h2
           className="font-display text-4xl font-bold"
-          style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.02em' }}
+          style={{ color: 'var(--pq-stage)', letterSpacing: '-0.02em' }}
         >
           Assignment
           <br />
@@ -757,7 +757,7 @@ function AssignmentExpiredView({
         {finished && (
           <div
             className="font-display tabular mt-8 text-[44px] font-bold"
-            style={{ color: 'var(--kahoot-stage)' }}
+            style={{ color: 'var(--pq-stage)' }}
           >
             {finished.data.score} pts
           </div>
@@ -765,7 +765,7 @@ function AssignmentExpiredView({
         <a
           href="/"
           className="mt-8 rounded-full px-5 py-3 font-display text-base font-bold"
-          style={{ background: 'var(--kahoot-stage)', color: 'var(--kahoot-stage-paper)' }}
+          style={{ background: 'var(--pq-stage)', color: 'var(--pq-stage-paper)' }}
         >
           Back to home
         </a>
@@ -810,17 +810,17 @@ function RevealView({
 
   if (tooSlow) {
     bg = 'var(--color-muted)'
-    fg = 'var(--kahoot-stage)'
+    fg = 'var(--pq-stage)'
     headline = 'Too slow!'
     subheadColor = 'rgba(20,18,30,0.55)'
   } else if (correct) {
-    bg = 'var(--kahoot-stage-paper)'
-    fg = 'var(--kahoot-stage)'
+    bg = 'var(--pq-stage-paper)'
+    fg = 'var(--pq-stage)'
     headline = 'Correct!'
     subheadColor = 'rgba(20,18,30,0.55)'
   } else {
-    bg = 'var(--kahoot-stage)'
-    fg = 'var(--kahoot-stage-paper)'
+    bg = 'var(--pq-stage)'
+    fg = 'var(--pq-stage-paper)'
     headline = 'Not this time'
     subheadColor = 'rgba(255,255,255,0.55)'
   }
@@ -852,7 +852,7 @@ function RevealView({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.4, ease: EASE, delay: 0.15 }}
           className="font-display tabular mt-6 text-[44px] font-bold"
-          style={{ color: 'var(--kahoot-spotlight)', letterSpacing: '-0.02em' }}
+          style={{ color: 'var(--pq-spotlight)', letterSpacing: '-0.02em' }}
         >
           +{points} pts
         </motion.div>
@@ -921,7 +921,7 @@ function LeaderboardView({
           className="text-[10px] font-medium uppercase"
           style={{
             letterSpacing: '0.4em',
-            color: 'var(--kahoot-stage)',
+            color: 'var(--pq-stage)',
             opacity: 0.5,
           }}
         >
@@ -931,7 +931,7 @@ function LeaderboardView({
         <div
           className="font-display mt-10 text-[14px] font-medium uppercase"
           style={{
-            color: 'var(--kahoot-stage)',
+            color: 'var(--pq-stage)',
             opacity: 0.55,
             letterSpacing: '0.2em',
           }}
@@ -941,7 +941,7 @@ function LeaderboardView({
         <div
           className="font-display tabular"
           style={{
-            color: 'var(--kahoot-stage)',
+            color: 'var(--pq-stage)',
             fontSize: 'clamp(72px, 22vw, 156px)',
             fontWeight: 700,
             letterSpacing: '-0.04em',
@@ -952,7 +952,7 @@ function LeaderboardView({
         </div>
         <div
           className="font-display tabular mt-2 text-2xl font-bold"
-          style={{ color: 'var(--kahoot-stage)', opacity: 0.7 }}
+          style={{ color: 'var(--pq-stage)', opacity: 0.7 }}
         >
           {player.score} pts
         </div>
@@ -1003,7 +1003,7 @@ function EndedView({
             <h1
               className="font-display mt-4 text-[44px] font-bold"
               style={{
-                color: 'var(--kahoot-stage)',
+                color: 'var(--pq-stage)',
                 letterSpacing: '-0.025em',
                 lineHeight: 1,
               }}
@@ -1013,7 +1013,7 @@ function EndedView({
             <div
               className="font-display tabular mt-6 text-[56px] font-bold"
               style={{
-                color: 'var(--kahoot-stage)',
+                color: 'var(--pq-stage)',
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
               }}
@@ -1023,7 +1023,7 @@ function EndedView({
             <div
               className="mt-1 text-sm font-medium uppercase"
               style={{
-                color: 'var(--kahoot-stage)',
+                color: 'var(--pq-stage)',
                 opacity: 0.55,
                 letterSpacing: '0.28em',
               }}
@@ -1032,7 +1032,7 @@ function EndedView({
             </div>
             <div
               className="mt-10 max-w-xs text-base"
-              style={{ color: 'var(--kahoot-stage)', opacity: 0.7 }}
+              style={{ color: 'var(--pq-stage)', opacity: 0.7 }}
             >
               Thanks for playing, {player.nickname}.
             </div>
@@ -1040,8 +1040,8 @@ function EndedView({
               href="/"
               className="mt-8 inline-block rounded-full px-6 py-3 font-display text-base font-bold"
               style={{
-                background: 'var(--kahoot-spotlight)',
-                color: 'var(--kahoot-stage)',
+                background: 'var(--pq-spotlight)',
+                color: 'var(--pq-stage)',
               }}
             >
               Back to home
@@ -1061,8 +1061,8 @@ function BoneShell({ children }: { children: React.ReactNode }) {
       className="flex flex-col"
       style={{
         minHeight: '100dvh',
-        background: 'var(--kahoot-stage-paper)',
-        color: 'var(--kahoot-stage)',
+        background: 'var(--pq-stage-paper)',
+        color: 'var(--pq-stage)',
       }}
     >
       {children}
@@ -1080,12 +1080,12 @@ function FullPageSpinner({ label }: { label: string }) {
           className="h-6 w-6 rounded-full border-2"
           style={{
             borderColor: 'rgba(20,18,30,0.15)',
-            borderTopColor: 'var(--kahoot-stage)',
+            borderTopColor: 'var(--pq-stage)',
           }}
         />
         <span
           className="text-sm font-medium"
-          style={{ color: 'var(--kahoot-stage)', opacity: 0.6 }}
+          style={{ color: 'var(--pq-stage)', opacity: 0.6 }}
         >
           {label}
         </span>
@@ -1101,14 +1101,14 @@ function NotFound({ pin }: { pin: string }) {
       <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
         <h2
           className="font-display text-[40px] font-bold"
-          style={{ color: 'var(--kahoot-stage)', letterSpacing: '-0.025em', lineHeight: 1 }}
+          style={{ color: 'var(--pq-stage)', letterSpacing: '-0.025em', lineHeight: 1 }}
         >
           No game with PIN
         </h2>
         <div
           className="font-display tabular mt-3 text-[64px] font-bold"
           style={{
-            color: 'var(--kahoot-stage)',
+            color: 'var(--pq-stage)',
             letterSpacing: '0.06em',
             lineHeight: 1,
           }}
@@ -1119,8 +1119,8 @@ function NotFound({ pin }: { pin: string }) {
           href="/play"
           className="mt-8 rounded-full px-6 py-3 font-display text-base font-bold"
           style={{
-            background: 'var(--kahoot-spotlight)',
-            color: 'var(--kahoot-stage)',
+            background: 'var(--pq-spotlight)',
+            color: 'var(--pq-stage)',
           }}
         >
           Try a different PIN

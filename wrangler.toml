@@ -1,4 +1,4 @@
-name = "kahoot"
+name = "popquiz"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 main = "worker.ts"
@@ -23,7 +23,7 @@ bindings = [
 ]
 
 [vars]
-APP_NAME = "kahoot"
+APP_NAME = "popquiz"
 
 [dev]
 port = 8780

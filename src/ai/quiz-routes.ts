@@ -65,7 +65,7 @@ export function registerAiQuizRoutes(app: Hono<AppContext>, resolveAuth: Resolve
       try {
         const url = new URL(input)
         const res = await fetch(url.toString(), {
-          headers: { 'User-Agent': 'KahootClone/1.0' },
+          headers: { 'User-Agent': 'PopQuizClone/1.0' },
           signal: AbortSignal.timeout(15_000),
         })
         if (!res.ok) {
@@ -84,7 +84,7 @@ export function registerAiQuizRoutes(app: Hono<AppContext>, resolveAuth: Resolve
 
     const ai = createDeepSpaceAI(c.env, 'anthropic', { authToken: callerJwt })
 
-    const systemPrompt = `You are an expert quiz writer. Given source material, produce a JSON quiz suitable for a live Kahoot-style game.
+    const systemPrompt = `You are an expert quiz writer. Given source material, produce a JSON quiz suitable for a live quiz game show.
 
 Rules:
 - Output ONLY valid JSON. No commentary, no markdown fences.

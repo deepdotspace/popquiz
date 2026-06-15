@@ -1,7 +1,7 @@
 /**
  * QuestionView — phase C of the player flow.
  *
- * Iconic Kahoot rule: the player phone shows NO question text. Players look
+ * Classic quiz-game rule: the player phone shows NO question text. Players look
  * up at the host screen to read it. This component just presents the input
  * affordances (4 shapes / true-false / type / slider) plus a "locked in"
  * confirmation once they've answered.
@@ -80,7 +80,7 @@ export function QuestionView({
   return (
     <div
       className="flex h-full w-full items-center justify-center p-6 text-center"
-      style={{ color: 'var(--kahoot-stage)' }}
+      style={{ color: 'var(--pq-stage)' }}
     >
       Unsupported question type.
     </div>
@@ -109,7 +109,7 @@ function McqGrid({
   return (
     <div
       className="grid h-full w-full grid-cols-2 grid-rows-2 gap-1"
-      style={{ background: 'var(--kahoot-stage)' }}
+      style={{ background: 'var(--pq-stage)' }}
     >
       {slots.map((opt, i) => {
         const c = SHAPE_COLORS[i]
@@ -159,7 +159,7 @@ function TrueFalse({ onPick }: { onPick: (i: number) => void }) {
   return (
     <div
       className="grid h-full w-full grid-rows-2 gap-1"
-      style={{ background: 'var(--kahoot-stage)' }}
+      style={{ background: 'var(--pq-stage)' }}
     >
       {(['True', 'False'] as const).map((label, i) => {
         const c = SHAPE_COLORS[i]
@@ -205,8 +205,8 @@ function TypeAnswer({ onSend }: { onSend: (text: string) => void }) {
     <div
       className="flex h-full w-full flex-col px-5 pb-6 pt-8"
       style={{
-        background: 'var(--kahoot-spotlight)',
-        color: 'var(--kahoot-stage)',
+        background: 'var(--pq-spotlight)',
+        color: 'var(--pq-stage)',
       }}
     >
       <div
@@ -228,7 +228,7 @@ function TypeAnswer({ onSend }: { onSend: (text: string) => void }) {
           placeholder="Tap to type"
           className="w-full bg-transparent font-display outline-none"
           style={{
-            color: 'var(--kahoot-stage)',
+            color: 'var(--pq-stage)',
             fontSize: 'clamp(40px, 11vw, 72px)',
             fontWeight: 700,
             letterSpacing: '-0.025em',
@@ -244,8 +244,8 @@ function TypeAnswer({ onSend }: { onSend: (text: string) => void }) {
         whileTap={text.trim().length > 0 ? { scale: 0.98 } : undefined}
         className="w-full rounded-[24px] py-5 font-display text-2xl font-bold transition-opacity disabled:opacity-40"
         style={{
-          background: 'var(--kahoot-stage)',
-          color: 'var(--kahoot-spotlight)',
+          background: 'var(--pq-stage)',
+          color: 'var(--pq-spotlight)',
           minHeight: '64px',
         }}
       >
@@ -271,8 +271,8 @@ function SliderInput({
     <div
       className="flex h-full w-full flex-col px-5 pb-6 pt-8"
       style={{
-        background: 'var(--kahoot-spotlight)',
-        color: 'var(--kahoot-stage)',
+        background: 'var(--pq-spotlight)',
+        color: 'var(--pq-stage)',
       }}
     >
       <div
@@ -302,7 +302,7 @@ function SliderInput({
           value={val}
           onChange={(e) => setVal(Number(e.target.value))}
           className="mt-8 w-full"
-          style={{ accentColor: 'var(--kahoot-stage)' }}
+          style={{ accentColor: 'var(--pq-stage)' }}
         />
         <div
           className="mt-2 flex w-full justify-between font-display tabular text-base font-medium"
@@ -319,8 +319,8 @@ function SliderInput({
         whileTap={{ scale: 0.98 }}
         className="w-full rounded-[24px] py-5 font-display text-2xl font-bold"
         style={{
-          background: 'var(--kahoot-stage)',
-          color: 'var(--kahoot-spotlight)',
+          background: 'var(--pq-stage)',
+          color: 'var(--pq-spotlight)',
           minHeight: '64px',
         }}
       >
@@ -364,7 +364,7 @@ function LockedIn({
   const tint =
     shapeIdx != null
       ? SHAPE_COLORS[shapeIdx]?.color
-      : 'var(--kahoot-stage)'
+      : 'var(--pq-stage)'
 
   return (
     <motion.div
@@ -414,7 +414,7 @@ function LockedIn({
         className="absolute bottom-10 inline-flex items-center gap-3 rounded-full px-5 py-3 font-display text-base font-bold"
         style={{
           background: 'rgba(255,255,255,0.92)',
-          color: 'var(--kahoot-stage)',
+          color: 'var(--pq-stage)',
         }}
       >
         Locked in

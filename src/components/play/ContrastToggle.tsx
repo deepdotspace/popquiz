@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react'
 import { Eye } from 'lucide-react'
 
-const STORAGE_KEY = 'kahoot:contrast'
+const STORAGE_KEY = 'popquiz:contrast'
 
 export function ContrastToggle() {
   const [high, setHigh] = useState(false)
@@ -40,12 +40,12 @@ export function ContrastToggle() {
       style={
         high
           ? {
-              background: 'var(--kahoot-spotlight)',
-              color: 'var(--kahoot-stage)',
+              background: 'var(--pq-spotlight)',
+              color: 'var(--pq-stage)',
             }
           : {
-              background: 'var(--kahoot-stage)',
-              color: 'var(--kahoot-stage-paper)',
+              background: 'var(--pq-stage)',
+              color: 'var(--pq-stage-paper)',
               opacity: 0.55,
             }
       }

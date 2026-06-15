@@ -107,7 +107,7 @@ export default function ReportsIndexPage() {
         ) : rows.length === 0 ? (
           <EmptyState
             title="No games played yet"
-            description="Once you host a kahoot and end the game, the report will show up here."
+            description="Once you host a quiz and end the game, the report will show up here."
           />
         ) : (
           <ul role="list" className="border-t border-border">
@@ -191,7 +191,7 @@ function ReportRow({ row, onOpen }: { row: GameRow; onOpen: () => void }) {
               <span className="inline-flex items-center gap-1.5">
                 <span
                   className="inline-block h-2 w-2 rotate-45"
-                  style={{ backgroundColor: 'var(--kahoot-shape-yellow)' }}
+                  style={{ backgroundColor: 'var(--pq-shape-yellow)' }}
                   aria-hidden
                 />
                 Winner
