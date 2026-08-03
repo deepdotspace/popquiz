@@ -23,7 +23,7 @@ bindings = [
 ]
 
 [vars]
-DEEPSPACE_APP_ID = "popquiz"
+DEEPSPACE_APP_ID = "app_01KZ4F57VB02MZ56SH4YT4BK0N"
 APP_NAME = "popquiz"
 
 [dev]
