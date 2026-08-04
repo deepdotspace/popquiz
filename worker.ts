@@ -204,6 +204,27 @@ app.get('/api/auth/oauth-complete', async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+app.all('/api/auth/sign-out', async (c) => {
+  try {
+    await authWorkerFetch(c.env, '/api/auth/sign-out', {
+      method: c.req.method,
+      headers: c.req.raw.headers,
+      body: c.req.method !== 'GET' && c.req.method !== 'HEAD' ? c.req.raw.body : undefined,
+    })
+  } catch {
+    // Always expire the app-scoped cookie, even if auth-worker is unavailable.
+  }
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Set-Cookie': '__Secure-better-auth.session_token=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0',
+    },
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Auth proxy → auth-worker (same-origin cookies)
 // ---------------------------------------------------------------------------
 
@@ -644,6 +665,51 @@ function csvEscape(value: string): string {
   const escaped = value.replace(/"/g, '""')
   return needs ? `"${escaped}"` : escaped
 }
+
+// ---------------------------------------------------------------------------
+// Same-origin browser proxy for authenticated DeepSpace billing hooks.
+const BROWSER_PROXY_ROUTES = [
+  ['GET', '/_deepspace/subscriptions/me'],
+  ['POST', '/_deepspace/subscriptions/checkout'],
+  ['POST', '/_deepspace/subscriptions/portal'],
+  ['POST', '/_deepspace/charges/create'],
+  ['GET', '/_deepspace/charges/me'],
+] as const
+
+app.all('/_deepspace/*', async (c) => {
+  const url = new URL(c.req.url)
+  const method = c.req.method
+  const allowed = BROWSER_PROXY_ROUTES.some(
+    ([allowedMethod, path]) => allowedMethod === method && path === url.pathname,
+  )
+  if (!allowed) return c.json({ error: 'not_found' }, 404)
+
+  const auth = await resolveAuth(c.req.raw, c.env)
+  const userId = auth?.userId
+  if (!userId) return c.json({ error: 'unauthorized' }, 401)
+
+  const forwardedParams = new URLSearchParams(url.search)
+  forwardedParams.set('appId', c.env.DEEPSPACE_APP_ID)
+  const queryString = forwardedParams.toString()
+  const apiPath =
+    url.pathname.replace('/_deepspace/', '/api/') + (queryString ? `?${queryString}` : '')
+
+  const headers = new Headers(c.req.raw.headers)
+  headers.delete('x-user-id')
+  headers.delete('x-app-identity-token')
+  headers.delete('x-app-id')
+  if (c.env.APP_IDENTITY_TOKEN) {
+    headers.set('x-app-identity-token', c.env.APP_IDENTITY_TOKEN)
+    headers.set('x-app-id', c.env.DEEPSPACE_APP_ID)
+  }
+  headers.set('x-user-id', userId)
+
+  return apiWorkerFetch(c.env, apiPath, {
+    method,
+    headers,
+    body: ['GET', 'HEAD'].includes(method) ? undefined : c.req.raw.body,
+  })
+})
 
 // ---------------------------------------------------------------------------
 // Static assets (SPA fallback)
