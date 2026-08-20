@@ -1,6 +1,12 @@
 /**
  * /play/:pin — player state machine.
  *
+ * Public: this file lives outside `(protected)/` on purpose. Players arrive by
+ * QR code or by typing a PIN and never sign in, so nothing here may assume an
+ * account. The reads it makes (games, players, questions, answers) are all
+ * open to `viewer`, the role an unauthenticated socket gets, and its writes go
+ * through `callAction`, which carries a guest identity when there is no token.
+ *
  * Mirrors `game.state` and the user's player record. Phases:
  *   nickname pick → lobby → in_question → reveal → leaderboard → ended
  *
@@ -12,17 +18,17 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useUser } from 'deepspace'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { Game, Player, Question, Answer } from '../../../lib/types'
-import { callAction } from '../../../lib/actions-client'
-import { NicknamePicker } from '../../../components/play/NicknamePicker'
+import type { Game, Player, Question, Answer } from '../../lib/types'
+import { callAction } from '../../lib/actions-client'
+import { NicknamePicker } from '../../components/play/NicknamePicker'
 import {
   QuestionView,
   type QuestionAnswerPayload,
-} from '../../../components/play/QuestionView'
-import { ContrastToggle } from '../../../components/play/ContrastToggle'
-import { Shape } from '../../../components/play/Shape'
-import { SHAPE_COLORS } from '../../../lib/quiz-types'
-import { useToast } from '../../../components/ui/Toast'
+} from '../../components/play/QuestionView'
+import { ContrastToggle } from '../../components/play/ContrastToggle'
+import { Shape } from '../../components/play/Shape'
+import { SHAPE_COLORS } from '../../lib/quiz-types'
+import { useToast } from '../../components/ui/Toast'
 
 const PLAYER_KEY_PREFIX = 'popquiz:player:'
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -54,7 +60,10 @@ export default function PlayPinPage() {
     }
   }, [gameId, players, playersQ.status])
 
-  // Fall back to userId match if no cached id (covers anonymous re-mount).
+  // Signed-in players only: `useUser()` is null for a guest, so `userId` is ''
+  // and this no-ops for them. A guest who loses the cached id re-picks a
+  // nickname and `joinGame` hands back the same row, matched server-side on
+  // their guest id — same outcome, one extra tap.
   useEffect(() => {
     if (playerId || !gameId || !userId) return
     const mine = players.find((r) => r.data.userId === userId && r.data.kicked !== 1)

@@ -7,6 +7,7 @@
  */
 
 import { getAuthToken } from 'deepspace'
+import { getGuestSecret } from './guest-identity'
 
 export interface ActionResultClient<T = unknown> {
   success: boolean
@@ -26,7 +27,15 @@ export async function callAction<T = unknown>(
   }
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  } else {
+    // Signed out. The worker accepts this only for the actions on its public
+    // allowlist (joining and answering) and derives the caller's guest id from
+    // it; everything else still answers 401. Sent only when there is no token
+    // so a signed-in caller can never be downgraded to a guest identity.
+    headers['X-Guest-Secret'] = getGuestSecret()
+  }
 
   try {
     const res = await fetch(`/api/actions/${name}`, {

@@ -18,11 +18,37 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import {
   verifyJwt,
+  authenticatedRoomRequest,
+  resolveAppRole as sdkResolveAppRole,
   apiWorkerFetch,
   platformWorkerFetch,
   authWorkerFetch,
 } from 'deepspace/worker'
 import type { JwtVerifierConfig, VerifyResult } from 'deepspace/worker'
+
+/**
+ * Resolve a user's role from the app's canonical `users` collection.
+ *
+ * The SDK's resolveAppRole() addresses the RecordRoom as `app:${DEEPSPACE_APP_ID}`.
+ * This app's room - the one that actually holds the `users` rows this reads - is
+ * keyed `app:${APP_NAME}` (SCOPE_ID in src/constants.ts, what the client mounts
+ * RecordScope on, and every server-side idFromName in this file). Re-keying the
+ * room would orphan live data, so hand the SDK helper the name the room is
+ * actually stored under. The role logic itself is the SDK's, unchanged.
+ *
+ * This deliberately shadows the import so no call site can reach the raw export:
+ * a bare call reads an empty room and returns 'viewer' for everyone but the owner.
+ */
+function resolveAppRole(env: Env, userId: string) {
+  return sdkResolveAppRole(
+    {
+      RECORD_ROOMS: env.RECORD_ROOMS,
+      DEEPSPACE_APP_ID: env.APP_NAME,
+      OWNER_USER_ID: env.OWNER_USER_ID,
+    },
+    userId,
+  )
+}
 import {
   RecordRoom,
   YjsRoom,
@@ -31,12 +57,15 @@ import {
   CronRoom,
 } from 'deepspace/worker'
 import type { ActionTools, ActionResult, DOManifest, DOBindings } from 'deepspace/worker'
-import { actions } from './src/actions/index.js'
+import { actions, PUBLIC_ACTIONS } from './src/actions/index.js'
+import { guestUserId } from './src/lib/guest-identity.js'
+import { cronRoomName, createCronArmer, executionCtxOrNull } from './src/lib/cron-arm.js'
 import { tasks as cronTasks, runTask as runCronTask } from './src/cron.js'
 import { schemas } from './src/schemas.js'
 import { integrations } from './src/integrations.js'
 import { registerAiChatRoutes } from './src/ai/chat-routes.js'
 import { registerAiQuizRoutes } from './src/ai/quiz-routes.js'
+import { isPublicFileRead } from './src/lib/public-file-reads.js'
 
 // =============================================================================
 // DO Manifest — declares all Durable Objects for dynamic deploy bindings
@@ -147,6 +176,55 @@ const app = new Hono<AppContext>()
 app.use('/api/*', cors())
 
 // ---------------------------------------------------------------------------
+// Arm the cron room
+//
+// Without this, close-expired-assignments in src/cron.ts never runs: CronRoom
+// only schedules its first alarm when the DO is first touched, and nothing
+// else in PopQuiz ever touches it (/ws/cron/:roomId exists but no page opens
+// it). See src/lib/cron-arm.ts for the full why.
+//
+// Mounted on /api/* rather than *. Arming is a one-shot event that
+// self-perpetuates once it lands, so it does not need the widest possible
+// request surface — it needs requests that mean somebody is actually using the
+// app. /api/* covers every one of those (session check, actions, files,
+// reports) while keeping the ping off the static-asset and SPA-shell path,
+// where it would otherwise fire on the first stylesheet request of every new
+// isolate and on every crawler hit to the public landing page.
+//
+// Unlike Scout's equivalent, this deliberately does NOT exclude anonymous
+// callers, even though /api/actions/* now serves a signed-out join flow
+// (joinGame, submitAnswer). Scout excludes them because its task spends real
+// money — owner-billed AI generation and outbound email — and an anonymous
+// pageview should not start that. This task spends nothing: it makes no
+// integration or AI call and only writes rows in the app's own RecordRoom.
+// Meanwhile the hosts who need it most are precisely the ones who set an
+// assignment, closed the tab, and left students to play it signed-out. Gating
+// arming on a host being present would leave the task dead for exactly that
+// case. Revisit this line if the task ever grows a billed call.
+// ---------------------------------------------------------------------------
+
+const armCron = createCronArmer()
+
+app.use('/api/*', async (c, next) => {
+  // Skip arming when there is no ExecutionContext — no background-work channel
+  // to defer onto, and a route test has no business starting a cron. Checked
+  // before the latch so a test run can never consume the isolate's one arming
+  // attempt without pinging.
+  const background = executionCtxOrNull(() => c.executionCtx)
+
+  if (background) {
+    const arming = armCron(() => {
+      const ns = c.env.CRON_ROOMS
+      return ns.get(ns.idFromName(cronRoomName(c.env.APP_NAME))).fetch('https://cron-arm/ping')
+    })
+    // waitUntil, never await: arming must not sit in front of the response.
+    if (arming) background.waitUntil(arming)
+  }
+
+  await next()
+})
+
+// ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
 
@@ -248,14 +326,20 @@ app.all('/api/auth/*', async (c) => {
 //
 // Forwards /api/debug/* (set-role, sql, query, records, user-role, status)
 // to the DO's debug handler. The DO ships these endpoints unconditionally,
-// so we gate the proxy on env.ALLOW_DEBUG_ROUTES === "true". The CLI
-// writes that env var to .dev.vars on `deepspace dev`/`deepspace test`,
-// never to deploy secrets — so production apps return 404 here.
+// so we gate the proxy on env.ALLOW_DEBUG_ROUTES === "true" AND on a verified
+// admin. The CLI writes that env var to .dev.vars on `deepspace dev`/
+// `deepspace test`, never to deploy secrets — so production apps return 404
+// here even before the role check.
 // ---------------------------------------------------------------------------
 
 app.all('/api/debug/*', async (c) => {
   if (c.env.ALLOW_DEBUG_ROUTES !== 'true') {
     return c.notFound()
+  }
+  const auth = await resolveAuth(c.req.raw, c.env)
+  if (!auth) return c.json({ error: 'unauthorized' }, 401)
+  if ((await resolveAppRole(c.env, auth.userId)) !== 'admin') {
+    return c.json({ error: 'forbidden' }, 403)
   }
   const stub = c.env.RECORD_ROOMS.get(
     c.env.RECORD_ROOMS.idFromName(`app:${c.env.APP_NAME}`),
@@ -362,47 +446,56 @@ app.all('/api/integrations/:name/:endpoint', async (c) => {
 
 function wsRoute(
   doNamespace: (env: Env) => DurableObjectNamespace,
-  extraParams?: (auth: VerifyResult) => Record<string, string>,
+  extraIdentity?: (auth: VerifyResult, env: Env) => { role?: string } | Promise<{ role?: string }>,
 ) {
   return async (c: any) => {
     const id = c.req.param('roomId') ?? c.req.param('docId') ?? c.req.param('scopeId')
-    const url = new URL(c.req.url)
-    const token = url.searchParams.get('token')
-    const auth = token ? (await verifyJwt(jwtConfig(c.env), token)).result : null
+    if (!id) return new Response('Not found', { status: 404 })
+    const token = new URL(c.req.url).searchParams.get('token')
 
-    const doUrl = new URL(c.req.url)
-    if (auth) {
-      doUrl.searchParams.set('userId', auth.userId)
-      if (extraParams) {
-        for (const [k, v] of Object.entries(extraParams(auth))) {
-          doUrl.searchParams.set(k, v)
-        }
-      }
+    let auth: VerifyResult | null = null
+    if (token) {
+      auth = (await verifyJwt(jwtConfig(c.env), token)).result
+      if (!auth) return new Response('Unauthorized', { status: 401 })
     }
-    doUrl.searchParams.delete('token')
+
+    // Identity crosses the worker -> DO hop in headers, never on the URL.
+    // `authenticatedRoomRequest` strips the client's token and any inbound
+    // identity headers before stamping the verified ones, so neither channel
+    // can be spoofed.
+    const roomRequest = authenticatedRoomRequest(
+      c.req.raw,
+      auth,
+      auth ? await extraIdentity?.(auth, c.env) : undefined,
+    )
 
     const ns = doNamespace(c.env)
     const stub = ns.get(ns.idFromName(id))
-    return stub.fetch(new Request(doUrl.toString(), c.req.raw))
+    return stub.fetch(roomRequest)
   }
 }
 
 app.get('/ws/:roomId', wsRoute((env) => env.RECORD_ROOMS))
 
-app.get('/ws/yjs/:docId', wsRoute((env) => env.YJS_ROOMS, () => ({ role: 'member' })))
-
-app.get('/ws/canvas/:docId', wsRoute((env) => env.CANVAS_ROOMS, () => ({ role: 'member' })))
-
-
-app.get('/ws/presence/:scopeId', wsRoute(
-  (env) => env.PRESENCE_ROOMS,
-  (auth) => ({
-    ...(auth.claims.name ? { userName: auth.claims.name } : {}),
-    ...(auth.claims.email ? { userEmail: auth.claims.email } : {}),
-    ...(auth.claims.image ? { userImageUrl: auth.claims.image } : {}),
-  }),
+app.get('/ws/yjs/:docId', wsRoute(
+  (env) => env.YJS_ROOMS,
+  async (auth, env) => ({ role: await resolveAppRole(env, auth.userId) }),
 ))
 
+app.get('/ws/canvas/:docId', wsRoute(
+  (env) => env.CANVAS_ROOMS,
+  async (auth, env) => ({ role: await resolveAppRole(env, auth.userId) }),
+))
+
+// Presence carries no profile claims: name, email and avatar are no longer
+// part of a presence peer. The room derives everything from verified identity.
+app.get('/ws/presence/:scopeId', wsRoute((env) => env.PRESENCE_ROOMS))
+
+// Deliberately forwards NO role, unlike its siblings above. CronRoom reads
+// `role ?? 'viewer'`, so every connection here is read-only: it can watch task
+// status but cannot trigger, pause or resume. Cron runs on the app owner's
+// budget, so handing write access to every signed-in member would let anyone
+// spend it. Raising this is a product decision, not part of the SDK upgrade.
 app.get('/ws/cron/:roomId', wsRoute((env) => env.CRON_ROOMS))
 
 // ---------------------------------------------------------------------------
@@ -411,14 +504,30 @@ app.get('/ws/cron/:roomId', wsRoute((env) => env.CRON_ROOMS))
 
 app.post('/api/actions/:name', async (c) => {
   const auth = await resolveAuth(c.req.raw, c.env)
-  if (!auth) return c.json({ error: 'Unauthorized' }, 401)
   const name = c.req.param('name')
+
+  // A verified JWT always wins. A signed-in player stays attributed to their
+  // account even if their browser is still carrying a guest secret from an
+  // earlier signed-out session — the guest header is only ever consulted when
+  // there is no verified identity at all.
+  let userId: string
+  if (auth) {
+    userId = auth.userId
+  } else {
+    if (!PUBLIC_ACTIONS.has(name)) return c.json({ error: 'Unauthorized' }, 401)
+    const guestId = await guestUserId(c.req.header('X-Guest-Secret') ?? '')
+    if (!guestId) return c.json({ error: 'Unauthorized' }, 401)
+    userId = guestId
+  }
+
   const action = actions[name]
   if (!action) return c.json({ error: 'Action not found' }, 404)
   const params = await c.req.json<Record<string, unknown>>()
-  const callerJwt = c.req.header('Authorization')!.slice(7)
-  const tools = createActionTools(c.env, auth.userId, callerJwt)
-  const result = await action({ userId: auth.userId, params, tools, env: c.env, callerJwt })
+  // Empty for guests: they have no JWT, so they can bill no user-billed
+  // integration. Neither public action calls one.
+  const callerJwt = auth ? (c.req.header('Authorization') ?? '').slice(7) : ''
+  const tools = createActionTools(c.env, userId, callerJwt)
+  const result = await action({ userId, params, tools, env: c.env, callerJwt })
   return c.json(result as unknown as Record<string, unknown>)
 })
 
@@ -437,10 +546,20 @@ registerAiQuizRoutes(app, resolveAuth)
 // ---------------------------------------------------------------------------
 
 app.all('/api/files/*', async (c) => {
-  const auth = await resolveAuth(c.req.raw, c.env)
-  if (!auth) return c.json({ error: 'Unauthorized' }, 401)
-
   const url = new URL(c.req.url)
+  const auth = await resolveAuth(c.req.raw, c.env)
+
+  // Quiz media is uploaded with `scope: 'app'`, which the SDK documents as
+  // publicly readable — the returned URL goes straight into an <img>/<video>/
+  // <audio> src, and a browser attaches no Authorization header to those. So
+  // a keyed app-scope GET is served anonymously; see isPublicFileRead() for
+  // exactly which requests qualify and why the exclusions are load-bearing.
+  // Everything else — listing, uploads, multipart, deletes, any scope=self —
+  // still needs a verified JWT.
+  if (!auth && !isPublicFileRead(c.req.method, url.pathname, url.searchParams)) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+
   const platformUrl = new URL(c.req.url)
   platformUrl.pathname = url.pathname.replace('/api/files', '/internal/files')
 
@@ -448,10 +567,13 @@ app.all('/api/files/*', async (c) => {
   // Strip any caller-supplied identity; only the JWT-derived userId may
   // reach the platform-worker. Otherwise a client could spoof
   // `x-user-id: <victim>` and read another user's scope=self files.
+  // Unconditional: an anonymous caller must arrive at the platform with NO
+  // identity, which is what makes it resolve scope=self to an error instead
+  // of to somebody's prefix.
   headers.delete('x-user-id')
   headers.set('x-app-identity-token', c.env.APP_IDENTITY_TOKEN)
   headers.set('x-app-id', c.env.DEEPSPACE_APP_ID)
-  headers.set('x-user-id', auth.userId)
+  if (auth) headers.set('x-user-id', auth.userId)
 
   const resp = await platformWorkerFetch(
     c.env,
@@ -719,7 +841,12 @@ app.get('*', async (c) => {
   const response = await c.env.ASSETS.fetch(c.req.raw)
   if (response.status === 404) {
     const url = new URL(c.req.url)
-    url.pathname = '/index.html'
+    // A FILE, not a client route: a miss must 404. Returning the shell here
+    // is HTML parsed as JavaScript, which is a blank page.
+    if (url.pathname.slice(url.pathname.lastIndexOf('/') + 1).includes('.')) {
+      return c.json({ error: 'not_found' }, 404)
+    }
+    url.pathname = '/'
     return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw))
   }
   return response
