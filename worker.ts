@@ -57,7 +57,8 @@ import {
   CronRoom,
 } from 'deepspace/worker'
 import type { ActionTools, ActionResult, DOManifest, DOBindings } from 'deepspace/worker'
-import { actions } from './src/actions/index.js'
+import { actions, PUBLIC_ACTIONS } from './src/actions/index.js'
+import { guestUserId } from './src/lib/guest-identity.js'
 import { tasks as cronTasks, runTask as runCronTask } from './src/cron.js'
 import { schemas } from './src/schemas.js'
 import { integrations } from './src/integrations.js'
@@ -453,14 +454,30 @@ app.get('/ws/cron/:roomId', wsRoute((env) => env.CRON_ROOMS))
 
 app.post('/api/actions/:name', async (c) => {
   const auth = await resolveAuth(c.req.raw, c.env)
-  if (!auth) return c.json({ error: 'Unauthorized' }, 401)
   const name = c.req.param('name')
+
+  // A verified JWT always wins. A signed-in player stays attributed to their
+  // account even if their browser is still carrying a guest secret from an
+  // earlier signed-out session — the guest header is only ever consulted when
+  // there is no verified identity at all.
+  let userId: string
+  if (auth) {
+    userId = auth.userId
+  } else {
+    if (!PUBLIC_ACTIONS.has(name)) return c.json({ error: 'Unauthorized' }, 401)
+    const guestId = await guestUserId(c.req.header('X-Guest-Secret') ?? '')
+    if (!guestId) return c.json({ error: 'Unauthorized' }, 401)
+    userId = guestId
+  }
+
   const action = actions[name]
   if (!action) return c.json({ error: 'Action not found' }, 404)
   const params = await c.req.json<Record<string, unknown>>()
-  const callerJwt = c.req.header('Authorization')!.slice(7)
-  const tools = createActionTools(c.env, auth.userId, callerJwt)
-  const result = await action({ userId: auth.userId, params, tools, env: c.env, callerJwt })
+  // Empty for guests: they have no JWT, so they can bill no user-billed
+  // integration. Neither public action calls one.
+  const callerJwt = auth ? (c.req.header('Authorization') ?? '').slice(7) : ''
+  const tools = createActionTools(c.env, userId, callerJwt)
+  const result = await action({ userId, params, tools, env: c.env, callerJwt })
   return c.json(result as unknown as Record<string, unknown>)
 })
 
