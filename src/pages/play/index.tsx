@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ContrastToggle } from '../../../components/play/ContrastToggle'
+import { ContrastToggle } from '../../components/play/ContrastToggle'
 
 export default function PlayIndexPage() {
   const navigate = useNavigate()
