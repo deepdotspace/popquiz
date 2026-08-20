@@ -63,6 +63,7 @@ import { schemas } from './src/schemas.js'
 import { integrations } from './src/integrations.js'
 import { registerAiChatRoutes } from './src/ai/chat-routes.js'
 import { registerAiQuizRoutes } from './src/ai/quiz-routes.js'
+import { isPublicFileRead } from './src/lib/public-file-reads.js'
 
 // =============================================================================
 // DO Manifest — declares all Durable Objects for dynamic deploy bindings
@@ -478,10 +479,20 @@ registerAiQuizRoutes(app, resolveAuth)
 // ---------------------------------------------------------------------------
 
 app.all('/api/files/*', async (c) => {
-  const auth = await resolveAuth(c.req.raw, c.env)
-  if (!auth) return c.json({ error: 'Unauthorized' }, 401)
-
   const url = new URL(c.req.url)
+  const auth = await resolveAuth(c.req.raw, c.env)
+
+  // Quiz media is uploaded with `scope: 'app'`, which the SDK documents as
+  // publicly readable — the returned URL goes straight into an <img>/<video>/
+  // <audio> src, and a browser attaches no Authorization header to those. So
+  // a keyed app-scope GET is served anonymously; see isPublicFileRead() for
+  // exactly which requests qualify and why the exclusions are load-bearing.
+  // Everything else — listing, uploads, multipart, deletes, any scope=self —
+  // still needs a verified JWT.
+  if (!auth && !isPublicFileRead(c.req.method, url.pathname, url.searchParams)) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+
   const platformUrl = new URL(c.req.url)
   platformUrl.pathname = url.pathname.replace('/api/files', '/internal/files')
 
@@ -489,10 +500,13 @@ app.all('/api/files/*', async (c) => {
   // Strip any caller-supplied identity; only the JWT-derived userId may
   // reach the platform-worker. Otherwise a client could spoof
   // `x-user-id: <victim>` and read another user's scope=self files.
+  // Unconditional: an anonymous caller must arrive at the platform with NO
+  // identity, which is what makes it resolve scope=self to an error instead
+  // of to somebody's prefix.
   headers.delete('x-user-id')
   headers.set('x-app-identity-token', c.env.APP_IDENTITY_TOKEN)
   headers.set('x-app-id', c.env.DEEPSPACE_APP_ID)
-  headers.set('x-user-id', auth.userId)
+  if (auth) headers.set('x-user-id', auth.userId)
 
   const resp = await platformWorkerFetch(
     c.env,
