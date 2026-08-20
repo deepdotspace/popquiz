@@ -59,6 +59,7 @@ import {
 import type { ActionTools, ActionResult, DOManifest, DOBindings } from 'deepspace/worker'
 import { actions, PUBLIC_ACTIONS } from './src/actions/index.js'
 import { guestUserId } from './src/lib/guest-identity.js'
+import { cronRoomName, createCronArmer, executionCtxOrNull } from './src/lib/cron-arm.js'
 import { tasks as cronTasks, runTask as runCronTask } from './src/cron.js'
 import { schemas } from './src/schemas.js'
 import { integrations } from './src/integrations.js'
@@ -173,6 +174,55 @@ export type AppContext = { Bindings: Env }
 
 const app = new Hono<AppContext>()
 app.use('/api/*', cors())
+
+// ---------------------------------------------------------------------------
+// Arm the cron room
+//
+// Without this, close-expired-assignments in src/cron.ts never runs: CronRoom
+// only schedules its first alarm when the DO is first touched, and nothing
+// else in PopQuiz ever touches it (/ws/cron/:roomId exists but no page opens
+// it). See src/lib/cron-arm.ts for the full why.
+//
+// Mounted on /api/* rather than *. Arming is a one-shot event that
+// self-perpetuates once it lands, so it does not need the widest possible
+// request surface — it needs requests that mean somebody is actually using the
+// app. /api/* covers every one of those (session check, actions, files,
+// reports) while keeping the ping off the static-asset and SPA-shell path,
+// where it would otherwise fire on the first stylesheet request of every new
+// isolate and on every crawler hit to the public landing page.
+//
+// Unlike Scout's equivalent, this deliberately does NOT exclude anonymous
+// callers, even though /api/actions/* now serves a signed-out join flow
+// (joinGame, submitAnswer). Scout excludes them because its task spends real
+// money — owner-billed AI generation and outbound email — and an anonymous
+// pageview should not start that. This task spends nothing: it makes no
+// integration or AI call and only writes rows in the app's own RecordRoom.
+// Meanwhile the hosts who need it most are precisely the ones who set an
+// assignment, closed the tab, and left students to play it signed-out. Gating
+// arming on a host being present would leave the task dead for exactly that
+// case. Revisit this line if the task ever grows a billed call.
+// ---------------------------------------------------------------------------
+
+const armCron = createCronArmer()
+
+app.use('/api/*', async (c, next) => {
+  // Skip arming when there is no ExecutionContext — no background-work channel
+  // to defer onto, and a route test has no business starting a cron. Checked
+  // before the latch so a test run can never consume the isolate's one arming
+  // attempt without pinging.
+  const background = executionCtxOrNull(() => c.executionCtx)
+
+  if (background) {
+    const arming = armCron(() => {
+      const ns = c.env.CRON_ROOMS
+      return ns.get(ns.idFromName(cronRoomName(c.env.APP_NAME))).fetch('https://cron-arm/ping')
+    })
+    // waitUntil, never await: arming must not sit in front of the response.
+    if (arming) background.waitUntil(arming)
+  }
+
+  await next()
+})
 
 // ---------------------------------------------------------------------------
 // Auth
